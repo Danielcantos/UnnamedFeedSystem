@@ -16,7 +16,7 @@ def pipe_pressure_drop (L,D,f) : #depends on Length, Diameter, coefficient of fr
     
     return delta_p
 
-#rq : v = q0/(pi*D**2/4) en supposant conservation du debit. En effet Mach très faible devant 0,3 -> on peut supposer incompressible : rho=cste.
+#rq : v = q0/(pi*D**2/4) en supposant conservation du debit : vrai dans le cas d'un fluide mais pas ici !!!!
 #f s'obtient soit avec abaque soit vu que notre reynolds vaut environ 1000, on a l'approx : f = 64/Re
 
 
