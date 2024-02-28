@@ -26,17 +26,19 @@ import reliefs
 import reservoirs
 
 sys.path.insert(1, './Substances')
-import substances
+import fluids
+import gases
+import materials
 
 
 # Objective mass flow
 mdot = 0.5 # in kg/s might or might not be reached
 
 # Fluids and materials used
-Aluminium = substances.Material("Aluminium",2100,150e6,70e9)
-Steel = substances.Material("Steel",7800,550e6,210e9)
-Water = substances.Fluid("Water",1000,8.9e-4)
-Nitrogen = substances.Gas("Nitrogen",17.5e-6,296.8)
+Aluminium = materials.Material("Aluminium",2100,150e6,70e9)
+Steel = materials.Material("Steel",7800,550e6,210e9)
+Water = fluids.Fluid("Water",1000,8.9e-4)
+Nitrogen = gases.Gas("Nitrogen",17.5e-6,296.8)
 
 # Hydraulic chain declaration (empty)
 HydraulicChain = []
