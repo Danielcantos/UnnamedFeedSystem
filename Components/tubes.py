@@ -1,6 +1,6 @@
 # AEther 23-24 
 # Creation: 15/02/2024
-# Last edit: 16/02/2024
+# Last edit: 04/03/2024
 # It models conducts be they straight or curved and the pressure losses incurred
 
 
@@ -20,8 +20,7 @@ class Conduit:
         self.thickness = thickness # Self explanatory
         self.diameter = diameter # Internal diameter
         self.material = material # Specific object type
-        
-        
+             
 class Bend(Conduit):
     # For curved tubes
     def __init__(self,name:str,length:float,thickness:float,diameter:float,material,angle:float):
