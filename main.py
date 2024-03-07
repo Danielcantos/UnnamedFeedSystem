@@ -34,6 +34,9 @@ import materials
 # Objective mass flow
 mdot = 0.5 # in kg/s might or might not be reached
 
+# Ambient properties
+Tamb = 293 # in K
+
 # Fluids and materials used
 Aluminium = materials.Material("Aluminium",2100,150e6,70e9)
 Steel = materials.Material("Steel",7800,550e6,210e9)
@@ -86,4 +89,3 @@ HydraulicChain.append(SV2)
 HydraulicChain.append(C8)
 HydraulicChain.append(MV4)
 HydraulicChain.append(C9)
-
