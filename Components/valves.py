@@ -1,6 +1,6 @@
 # AEther 23-24
 # Creation: 15/02/2024
-# Last edit: 16/02/2024
+# Last edit: 14/03/2024
 # It models valves no matter type, elements that can be closed or opened and 
 # through which a small amount of pressure is lost
 
@@ -43,7 +43,6 @@ class checkValve:
 
 
 # Zapata functions
-
 def dPZapataLiquid(fluid: fluids.Fluid, valve: Valve, massFlow: float):
     # Equation presented by Zapata in his S3 project report
     # NOTE: we assume all inputs are in SI
@@ -62,8 +61,7 @@ def dPZapataLiquid(fluid: fluids.Fluid, valve: Valve, massFlow: float):
         
     dP = 1E5*SG*(Ql/Kf)**2
     return dP
-    
-    
+   
 def dPZapataGas(fluid: gases.Gas, valve: Valve, massFlow: float, temperature: float, pressure: float):
     # Equation presented by Zapata in his S3 project report
     # NOTE: we assume all inputs are in SI
@@ -83,5 +81,4 @@ def dPZapataGas(fluid: gases.Gas, valve: Valve, massFlow: float, temperature: fl
         
     dP = 1E5*SG*temperature/(8062**2*pressure)*(Qg/Kf)**2
     return dP
-    
-    
+
