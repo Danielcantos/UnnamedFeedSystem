@@ -50,23 +50,23 @@ HydraulicChain = []
 # List of components, in order
 R1 = sources.Cylinder("R1",120e5,5e-3)
 MV1 = valves.Valve("MV1",True,"Ball","Manual")
-C1 = tubes.Conduit("C1",10e-3,3e-3,0.25,"Test")
+C1 = tubes.Conduit("C1",0.1,0.003,0.064,Aluminium) # 10 cm tube, 3 mm thick, 1/4" diam NOTE: placeholder
 PR1 = pressureReducers.pressureReducer("PR1",80e5)
-C2 = tubes.Conduit("C2",10e-3,3e-3,0.25,"Test")
+C2 = tubes.Conduit("C2",0.1,0.003,0.064,Aluminium)
 CV1 = valves.checkValve("CV1")
-C3 = tubes.Conduit("C3",10e-3,3e-3,0.25,"Test")
+C3 = tubes.Conduit("C3",0.1,0.003,0.064,Aluminium)
 SV1 = valves.Valve("SV1",True,"Ball","Solenoid")
-C4 = tubes.Conduit("C4",10e-3,3e-3,0.25,"Test")
+C4 = tubes.Conduit("C4",0.1,0.003,0.064,Aluminium)
 BD1 = reliefs.burstDisk("BD1",False,100e5)
-C5 = tubes.Conduit("C5",10e-3,3e-3,0.25,"Test")
+C5 = tubes.Conduit("C5",0.1,0.003,0.064,Aluminium)
 R2 = reservoirs.Tank("R2",1e5,5e-3)
-C6 = tubes.Conduit("C6",10e-3,3e-3,0.25,"Test")
-B1 = tubes.Bend("B1",10e-3,3e-3,0.25,"Test",90)
-C7 = tubes.Conduit("C7",10e-3,3e-3,0.25,"Test")
+C6 = tubes.Conduit("C6",0.1,0.003,0.064,Aluminium)
+B1 = tubes.Bend("B1",0.1,0.003,0.064,Aluminium,90)
+C7 = tubes.Conduit("C7",0.1,0.003,0.064,Aluminium)
 SV2 = valves.Valve("SV2",True,"Ball","Solenoid")
-C8 = tubes.Conduit("C8",10e-3,3e-3,0.25,"Test")
+C8 = tubes.Conduit("C8",0.1,0.003,0.064,Aluminium)
 MV4 = valves.Valve("MV4",True,"Ball","Manual")
-C9 = tubes.Conduit("C9",10e-3,3e-3,0.25,"Test")
+C9 = tubes.Conduit("C9",0.1,0.003,0.064,Aluminium)
 
 
 # Definition of the chain
