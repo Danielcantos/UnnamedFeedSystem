@@ -108,40 +108,40 @@ class Globe_valve:
 def dp_ball_valve(valve:Ball_valve, fluid: fluids.Fluid):
     
     xi = 0.0946*exp(0.1106*h/self.diameter)
-    dp = 1/2*fluid.density*valve.fluid_velocity**2*xi
+    dp = 1/2 * fluid.density * valve.fluid_velocity**2 * xi
     
     return dp
     
 
 def dp_ball_valve(valve:Butterfly_valve, fluid: fluids.Fluid):
     
-    Re = *fluid.density*valve.fluid_velocity*valve.diameter/fluid.viscosity
-    xi = 1/Re + 1 - 50/Re*0.3166*exp(0.0958*self.delta)
-    dp = 1/2*fluid.density*valve.liquid_velocity**2*xi
+    Re = fluid.density*valve.fluid_velocity*valve.diameter/fluid.viscosity
+    xi = 1/Re + 1 - 50/Re * 0.3166 * exp(0.0958 * self.delta)
+    dp = 1/2 * fluid.density * valve.liquid_velocity**2 * xi
     
     return dp
 
 
-def dp_gate_valve(valve = Gate_valve, fluid: fluids.Fluid):
+def dp_gate_valve(valve = Gate_valve, fluid: fluids.Fluid):  #change Fluid by N2 or H2O2
     
-    xi = 116.34*exp(-7.98*valve.height_open/valve.diameter)
-    dp = 1/2*fluid.density*valve.fluid_velocity**2*xi
+    xi = 116.34 * exp(-7.98 * valve.height_open / valve.diameter)
+    dp = 1/2 * fluid.density * valve.fluid_velocity**2 * xi
     
     return dp
 
 
 def dp_globe_valve(valve = Globe_valve, fluid: fluids.Fluid):
     
-    xi = 1.0973*valve.diameter**(-0.5955)
-    dp = 1/2*fluid.density*valve.fluid_velocity**2*xi
+    xi = 1.0973 * valve.diameter**(-0.5955)
+    dp = 1/2 * fluid.density * valve.fluid_velocity**2 * xi
     
     return dp
 
 
 def dp_check_valve(valve = Check_valve, fluid: fluids.Fluid):
     
-    xi = 1.07 + 5.16*valve.diameter - 6.71*valve.diameter**2 + 4.93*valve.diameter**3
-    dp = 1/2*fluid.density*valve.fluid_velocity**2*xi
+    xi = 1.07 + 5.16 * valve.diameter - 6.71 * valve.diameter**2 + 4.93 * valve.diameter**3
+    dp = 1/2 * fluid.density * valve.fluid_velocity**2 * xi
     
     return dp
 
