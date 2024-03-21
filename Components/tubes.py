@@ -30,7 +30,8 @@ class Conduit:
         self.thickness = thickness # Self explanatory
         self.diameter = diameter # Internal diameter
         self.material = material # Specific object type
-             
+        self.fluid_velocity #velocity of the incoming fluid
+        
 class Bend(Conduit):
     # For curved tubes
     def __init__(self, name: str, length: float, thickness: float, diameter: float, material: materials.Material, angle: float):
