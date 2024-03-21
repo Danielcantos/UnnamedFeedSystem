@@ -30,19 +30,23 @@ class Conduit:
         self.thickness = thickness # Self explanatory
         self.diameter = diameter # Internal diameter
         self.material = material # Specific object type
-        self.fluid_velocity #velocity of the incoming fluid
         
-class Bend(Conduit):
+class Bend(Conduit) : 
     # For curved tubes
-    def __init__(self, name: str, length: float, thickness: float, diameter: float, material: materials.Material, angle: float):
+    def __init__(self, name: str, length: float, thickness: float, diameter: float, material: materials.Material, angle:float, radiusCurve:float):
         super().__init__(name,length,thickness,diameter,material) # We assume that the length is equally distributed at both sides of the bend
-        self.angle = angle # Self explanatory
+        self.angle = angle # Angle of the bend IN DEGREES
+        self.radiusCurve = radiusCurve # Not half the diameter, but the radius of the curve the tube makes
         
 class Tee(Conduit):
     # Fot a T connector with 3 sides
-    def __init__(self, name: str, length: float, thickness: float, diameter: float, material: materials.Material):
+    def __init__(self, name: str, length: float, thickness: float, diameter: float, material: materials.Material, direction1:int, direction2:int, direction3:int):
         super().__init__(name,length,thickness,diameter,material) # NOTE: do we need an additional input like the number of connections or an int that marks nodes?
-
+        # The direction are defined as positive going in and negative going out
+        # Input numbers defined following the normal orientation of the letter T
+        direction1 = +1 
+        direction2 = -1
+        direction3 = -1
 
 def frictionFactor (fluid: fluids.Fluid, tube: Conduit, massFlow: float):
     # Numerical and simplified implementation of the Darcy-Weisbach graph
@@ -52,8 +56,7 @@ def frictionFactor (fluid: fluids.Fluid, tube: Conduit, massFlow: float):
     nu = fluid.staticViscosity/fluid.density # Kinematic viscosity
     
     Re = u*tube.diameter/nu
-    
-    print("Reynolds regime: " + str(Re))
+  
     if Re < 2300:
         # Laminar flow
         fD = 64/Re
@@ -84,3 +87,29 @@ def dPDarcyWeisbach(fluid: fluids.Fluid, tube: Conduit, massFlow: float):
     
     return dP
 
+def dPBend(fluid:fluids.Fluid,bend:Bend,massFlow:float):
+    
+    area = np.pi*(bend.diameter)**2/4 # Tube section
+    u = massFlow/(area*fluid.density) # Speed inside of the conduit. Continuity equation
+    nu = fluid.staticViscosity/fluid.density # Kinematic viscosity
+    
+    Re = u*bend.diameter/nu
+    
+    if Re < 600:
+        lamb = 20/(Re**0.65)*(bend.diameter/(2*2*bend.radiusCurve))**(0.175)
+        
+    elif Re < 1400:
+        lamb = 10.4/(Re**0.55)*(bend.diameter/(2*2*bend.radiusCurve))**(0.225)
+        
+    elif Re < 5000:
+        lamb = 5/(Re**0.45)*(bend.diameter/(2*2*bend.radiusCurve))**(0.275)
+    else:
+        print("Fuck")
+        lamb = 1
+        
+    xi = 0.0175*lamb*bend.radiusCurve/bend.diameter*bend.angle
+    dP = 1/2 * fluid.density * u**2 * xi
+    
+    return dP
+
+#def dPTee(fluid:fluids.Fluid,tee:Tee,massFlow:float):

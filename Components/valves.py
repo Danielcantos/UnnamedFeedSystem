@@ -22,14 +22,12 @@ import gases
 import materials
 
 # CLASS AND SUBCLASS DECLARATION
-class Ball_valve:
-        def __init__(self,name:str,state: bool,type: str,actuation:str,delta:float,fluid_velocity:float): 
+class Valve:
+        def __init__(self,name:str,state:bool,type:str,actuation:str,diameter:float): 
                 self.name = name # Identifier on the PI&D
                 self.state = state # Closed (0) or Opened (1)
-                self.type = ball # Ball, needle...
                 self.actuation = actuation # Manual, solenoid or pneumatic
-                self.delta = delta #valve opening angle
-                self.fluid_velocity = velocity #velocity of the incoming fluid
+                self.diameter = diameter # Valve diameter
                 
         def open(self):
             self.state = True
@@ -38,62 +36,11 @@ class Ball_valve:
             self.state = False
             
             
-class Check_valve:
-        def __init__(self,name:str,state: bool,type: str,actuation:str,delta:float,diameter:float,fluid_velocity:float): 
+class CheckValve:
+        def __init__(self,name:str,state: bool,type: str,actuation:str,diameter:float): 
                 self.name = name # Identifier on the PI&D
                 self.state = state # Closed (0) or Opened (1)
-                self.type = check # Ball, needle...
                 self.actuation = actuation # Manual, solenoid or pneumatic
-                self.fluid_velocity = velocity #velocity of the incoming fluid
-                self.diameter = diameter #diameter of the valve
-                
-        def open(self):
-            self.state = True
-            
-        def close(self):        
-            self.state = False
-
-
-class Butterfly_valve:
-        def __init__(self,name:str,state: bool,type: str,actuation:str,delta:float,diameter:float,fluid_velocity:float): 
-                self.name = name # Identifier on the PI&D
-                self.state = state # Closed (0) or Opened (1)
-                self.type = butterfly # Ball, needle...
-                self.actuation = actuation # Manual, solenoid or pneumatic
-                self.delta = delta #valve opening angle
-                self.fluid_velocity = velocity #velocity of the incoming fluid
-                self.diameter = diameter #diameter of the valve
-                
-        def open(self):
-            self.state = True
-            
-        def close(self):        
-            self.state = False
-
-
-class Gate_valve:
-        def __init__(self,name:str,state: bool,type: str,actuation:str,opening:float,diameter:float,fluid_velocity:float): 
-                self.name = name # Identifier on the PI&D
-                self.state = state # Closed (0) or Opened (1)
-                self.type = gate # Ball, needle...
-                self.actuation = actuation # Manual, solenoid or pneumatic
-                self.height_open = height_open #valve opening height
-                self.fluid_velocity = velocity #velocity of the incoming fluid
-                   
-        def open(self):
-            self.state = True
-            
-        def close(self):        
-            self.state = False
-
-
-class Globe_valve:
-        def __init__(self,name:str,state: bool,type: str,actuation:str,delta:float,diameter:float,fluid_velocity:float): 
-                self.name = name # Identifier on the PI&D
-                self.state = state # Closed (0) or Opened (1)
-                self.type = globe # Ball, needle...
-                self.actuation = actuation # Manual, solenoid or pneumatic
-                self.fluid_velocity = velocity #velocity of the incoming fluid
                 self.diameter = diameter #diameter of the valve
                 
         def open(self):
@@ -105,43 +52,43 @@ class Globe_valve:
 
 # Pressure drop in valves
 
-def dp_ball_valve(valve:Ball_valve, fluid: fluids.Fluid):
+def dPBallValve(fluid:fluids.Fluid, valve:Valve, delta:float,velocity:float):
     
-    xi = 0.0946*exp(0.1106*h/self.diameter)
-    dp = 1/2 * fluid.density * valve.fluid_velocity**2 * xi
+    xi = 0.0946*np.exp(0.1106*delta)
+    dP = 1/2 * fluid.density * velocity**2 * xi
+    
+    return dP
+    
+
+def dPButterflyValve(fluid:fluids.Fluid,valve:Valve,delta:float,velocity:float):
+    
+    Re = fluid.density*velocity*valve.diameter/fluid.viscosity
+    xi = 1/Re + 1 - 50/Re * 0.3166 * np.exp(0.0958 * delta)
+    dP = 1/2 * fluid.density * velocity**2 * xi
+    
+    return dP
+
+
+def dPGateValve(fluid:fluids.Fluid,valve:Valve,height:float,velocity:float):  #change Fluid by N2 or H2O2
+    
+    xi = 116.34 * np.exp(-7.98 * height / valve.diameter)
+    dp = 1/2 * fluid.density * velocity**2 * xi
     
     return dp
-    
-
-def dp_ball_valve(valve:Butterfly_valve, fluid: fluids.Fluid):
-    
-    Re = fluid.density*valve.fluid_velocity*valve.diameter/fluid.viscosity
-    xi = 1/Re + 1 - 50/Re * 0.3166 * exp(0.0958 * self.delta)
-    dp = 1/2 * fluid.density * valve.liquid_velocity**2 * xi
-    
-    return dp
 
 
-def dp_gate_valve(valve = Gate_valve, fluid: fluids.Fluid):  #change Fluid by N2 or H2O2
-    
-    xi = 116.34 * exp(-7.98 * valve.height_open / valve.diameter)
-    dp = 1/2 * fluid.density * valve.fluid_velocity**2 * xi
-    
-    return dp
-
-
-def dp_globe_valve(valve = Globe_valve, fluid: fluids.Fluid):
+def dPGlobeValve(fluid:fluids.Fluid,valve:Valve,velocity:float):
     
     xi = 1.0973 * valve.diameter**(-0.5955)
-    dp = 1/2 * fluid.density * valve.fluid_velocity**2 * xi
+    dp = 1/2 * fluid.density * velocity**2 * xi
     
     return dp
 
 
-def dp_check_valve(valve = Check_valve, fluid: fluids.Fluid):
+def dPCheckValve(fluid:fluids.Fluid,valve:Valve,velocity:float):
     
     xi = 1.07 + 5.16 * valve.diameter - 6.71 * valve.diameter**2 + 4.93 * valve.diameter**3
-    dp = 1/2 * fluid.density * valve.fluid_velocity**2 * xi
+    dp = 1/2 * fluid.density * velocity**2 * xi
     
     return dp
 

@@ -41,7 +41,10 @@ Tamb = 293 # in K
 Aluminium = materials.Material("Aluminium",2100,150e6,70e9)
 Steel = materials.Material("Steel",7800,550e6,210e9)
 Water = fluids.Fluid("Water",1000,8.9e-4)
+NitrogenLiquid = fluids.Fluid("NitrogenLiquid",1.17,17.81e-6)
 Nitrogen = gases.Gas("Nitrogen",17.5e-6,296.8)
+HydrogenPeroxide = fluids.Fluid("H2O2",1.11,1.24e-3) # Source?
+
 
 # Hydraulic chain declaration (empty)
 HydraulicChain = []
