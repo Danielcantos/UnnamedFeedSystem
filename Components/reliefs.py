@@ -13,7 +13,7 @@ import fluids
 import gases
 import materials
 
-class burstDisk:
+class BurstDisk:
     def __init__(self, name: str, state: bool, burstPressure: float):
         self.name = name # Identifier on the PI&D
         self.state = state

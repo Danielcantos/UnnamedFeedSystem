@@ -14,13 +14,22 @@ import gases
 import materials
 
 # CLASS AND SUBCLASS DECLARATION
-class pressureReducer:
-    def __init__(self, name: str, pressureData: np.ndarray):
+
+class PressureCurve:
+    def __init__(self,Pin: float, mdot: np.array, Pout: np.array):
+        self.Pin = Pin
+        self.mdot = mdot
+        self.Pout = Pout
+        
+class PressureReducer:
+    def __init__(self, name: str, pressureData: list):
         self.name = name # Identifier on the PI&D
         self.pressureData = pressureData
-        # The data will be formatted in the following way:
-        # - Input pressure (Pa)
-        # - Number of data points
-        # - Mass flow data points (kg/s)
-        # - Pressure data points (Pa)
         
+    def addPressureCurve(self, pressureCurve: PressureCurve):
+        self.pressureData.append(pressureCurve)
+
+        
+def interpolatePressure(gas: gases.Gas, pressure: float):
+    # Not coded for now
+    return 0
