@@ -9,4 +9,3 @@ class Material:
         self.density = density
         self.yieldStrength = yieldStrength
         self.youngModulus = youngModulus
-        self.roughness = roughness
