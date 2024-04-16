@@ -1,4 +1,4 @@
-# SCUBE-AEther feed system calculations program
+# SCUBE - AEther feed system calculator program
 # Developed by the Feed System Team 2023-24:
 # - Daniel Cantos Gálvez (danielcantosgalvez@gmail.com)
 # - Hemanth Alapati
@@ -13,6 +13,7 @@
 
 # Native libraries
 import numpy as np
+import scipy
 import sys
 import matplotlib.pyplot as plt
 
@@ -47,6 +48,10 @@ Nitrogen = gases.Gas("Nitrogen",17.5e-6,296.8)
 HydrogenPeroxide = fluids.Fluid("H2O2",1369.6,1.24e-3) # Overleaf regression (kg/m3), 
 
 
+print("--------------------------------------------")
+print("AEther feed system calculator program")
+print("--------------------------------------------")
+
 # Hydraulic chain declaration (empty)
 HydraulicChain = []
 
@@ -55,7 +60,7 @@ HydraulicChain = []
 R1 = sources.Cylinder("R1",120e5,5e-3)
 MV1 = valves.Valve("MV1",True,"Ball","Manual",0.064)
 C1 = tubes.Conduit("C1",0.1,0.003,0.064,Aluminium) # 10 cm tube, 3 mm thick, 1/4" diam NOTE: placeholder
-PR1 = pressureReducers.PressureReducer("PR1",[pressureReducers.PressureCurve(100e5,np.array([0.5, 0.6, 0.7]), [50e5, 60e5, 70e5])])
+PR1 = pressureReducers.PressureReducer("PR1",[pressureReducers.PressureCurve(100e5,np.array([0.5, 0.6, 0.7]), [70e5, 60e5, 50e5])])
 C2 = tubes.Conduit("C2",0.1,0.003,0.064,Aluminium)
 CV1 = valves.CheckValve("CV1",True,"Ball","Manual",0.064)
 C3 = tubes.Conduit("C3",0.1,0.003,0.064,Aluminium)
