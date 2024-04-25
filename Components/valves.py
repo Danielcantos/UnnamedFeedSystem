@@ -1,6 +1,6 @@
 # AEther 23-24
 # Creation: 15/02/2024
-# Last edit: 21/03/2024
+# Last edit: 25/04/2024
 # It models valves no matter type, elements that can be closed or opened and 
 # through which a small amount of pressure is lost
 
@@ -25,6 +25,7 @@ import materials
 class Valve:
         def __init__(self,name:str,state:bool,type:str,actuation:str,diameter:float): 
                 self.name = name # Identifier on the PI&D
+                self.type = type
                 self.state = state # Closed (0) or Opened (1)
                 self.actuation = actuation # Manual, solenoid or pneumatic
                 self.diameter = diameter # Valve diameter
@@ -53,7 +54,7 @@ class CheckValve:
 # Pressure drop in valves
 
 def dPBallValve(fluid:fluids.Fluid, valve:Valve, delta:float,velocity:float):
-    
+    # delta: opening angle of the ball valve
     xi = 0.0946*np.exp(0.1106*delta)
     dP = 1/2 * fluid.density * velocity**2 * xi
     
@@ -91,9 +92,6 @@ def dPCheckValve(fluid:fluids.Fluid,valve:Valve,velocity:float):
     dp = 1/2 * fluid.density * velocity**2 * xi
     
     return dp
-
-
-
 
 # Zapata functions
 

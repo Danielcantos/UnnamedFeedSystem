@@ -1,6 +1,6 @@
 # AEther 23-24
 # Creation: 16/02/2024
-# Last edit: 12/04/2024
+# Last edit: 25/04/2024
 # Two phase containers where the propellant is kept until forced out via pressurization
 
 # Native libraries
@@ -13,24 +13,50 @@ import fluids
 import gases
 import materials
 
+# ----------------------------------------------------
+# CLASS DEFINITIONS
+# ----------------------------------------------------
+
+class TankInterface:
+    def __init__(self, upstreamSubstance: gases.Gas, downstreamSubstance: fluids.Fluid, positionInterface: float):
+        self.upstreamSubstance = upstreamSubstance # Pressurizer gas
+        self.downstreamSubstance = downstreamSubstance # Fluid
+        self.positionInterface = positionInterface # With respects to the 
+        
 class Tank:
-    def __init__(self, name: str, pressure: float, volume: float, diameter: float, thickness: float, inputDiameter: float, outputDiameter: float, positionInterface: float):
+    def __init__(self, name: str, pressure: float, volume: float, diameter: float, thickness: float, inputDiameter: float, outputDiameter: float, interface: TankInterface):
         self.name = name
         self.pressure = pressure # Internal pressure in Pa
         self.volume = volume # Internal volume in m3
         self.diameter = diameter # Internal diameter in m
-        self.length = 4/np.pi*volume/self.diameter**2
         self.thickness = thickness
         self.inputDiameter = inputDiameter
         self.outputDiameter = outputDiameter
-        self.positionInterface = positionInterface
-        
-def updateInterface(self, fluid: fluids.Fluid, mdotOut: float, dt: float):
+        self.interface = interface
+        self.length = 4*self.volume/(np.pi*self.diameter**2)
+
+# ----------------------------------------------------
+# HELPER FUNCTIONS
+# ----------------------------------------------------
+
+# Interfaces
+
+def updateInterface(tank: Tank, mdotOut: float, dt: float):
     # Execute this at each timestep
-    emptyingSpeed =  4*mdotOut/(np.pi*fluid.density*self.diameter**2)
+    emptyingSpeed =  4*mdotOut/(np.pi*tank.interface.downstreamSubstance.density*tank.diameter**2)
     displacementInterface = emptyingSpeed*dt
-    self.positionInterface += displacementInterface
+    tank.interface.positionInterface += displacementInterface
+
+def densityInterface(tank: Tank, massFlowOut: float, temperature: float, pressure: float):
+    gasDensity = tank.pressure/(tank.interface.upstreamSubstance.gasConstant*temperature)
     
+    massFlowIn = massFlowOut*pressure/(gasDensity*tank.interface.upstreamSubstance.gasConstant*temperature) 
+    
+    # NOTE: the pressure shouldn't directly be an input, is a part of the chain
+    
+    return massFlowIn
+
+# Helper functions pressure
 def frictionFactor (fluid: fluids.Fluid, tank: Tank, massFlow: float):
     # Numerical and simplified implementation of the Darcy-Weisbach graph
     
@@ -85,38 +111,32 @@ def xiOutput(fluid: fluids.Fluid, tank: Tank, massFlow: float):
         
     return xi
 
-def dPIn(gas: gases.Gas, tank: Tank, massFlowIn: float, speed: float, temperature: float):
+# ----------------------------------------------------
+# PRESSURE LOSSES
+# ----------------------------------------------------
+
+def dPIn(tank: Tank, massFlowIn: float, speed: float, temperature: float):
     fD = 0.0 # Friction with gas assumed negligible
-    xi = xiInput(gas,tank,massFlowIn, temperature)
-    gasDensity = tank.pressure/(gas.gasConstant*temperature)
-    dP = (xi + fD*tank.positionInterface/tank.diameter)*gasDensity*speed**2/2
+    xi = xiInput(tank.interface.upstreamSubstance,tank,massFlowIn, temperature)
+    gasDensity = tank.pressure/(tank.interface.upstreamSubstance.gasConstant*temperature)
+    dP = (xi + fD*tank.interface.positionInterface/tank.diameter)*gasDensity*speed**2/2
 
-def dPOut(fluid: fluids.Fluid,tank: Tank, massFlowOut: float, speed: float):   
-    fD = frictionFactor(fluid,tank,massFlowOut)
-    xi = xiOutput(fluid,tank,massFlowOut)
-    dPOut = (xi + fD*(tank.length-tank.positionInterface)/tank.diameter)*fluid.density*speed**2/2
+def dPOut(tank: Tank, massFlowOut: float, speed: float):   
+    fD = frictionFactor(tank.interface.downstreamSubstance,tank,massFlowOut)
+    xi = xiOutput(tank.interface.downstreamSubstance,tank,massFlowOut)
+    dPOut = (xi + fD*(tank.length-tank.interface.positionInterface)/tank.diameter)*tank.interface.downstreamSubstance.density*speed**2/2
 
-def dPTot(fluid: fluids.Fluid, gas: gases.Gas, tank: Tank, massFlowOut: float, temperature: float, pressure: float):
-    
+def dPTot(tank: Tank, massFlowOut: float, temperature: float, pressure: float):
     area = np.pi*(tank.diameter)**2/4 # Tube section
-    rho = fluid.density # Assumed incompressible
+    rho = tank.interface.downstreamSubstance.density # Assumed incompressible
     w0 = massFlowOut/(area*rho) # Speed inside of the conduit. Continuity equation
     
-    dPOutput = dPOut(fluid,tank,massFlowOut,w0)
+    dPOutput = dPOut(tank,massFlowOut,w0)
     Pin = pressure + dPOutput
     
-    massFlowIn = densityInterface(gas, tank, massFlowOut, temperature, pressure)
-    dPInput = dPIn(gas,tank,massFlowIn,w0,temperature)
+    massFlowIn = densityInterface(tank, massFlowOut, temperature, pressure)
+    dPInput = dPIn(tank,massFlowIn,w0,temperature)
     
     dP = dPInput + dPOutput
     
     return dP
-
-def densityInterface(gas: gases.Gas, tank: Tank, massFlowOut: float, temperature: float, pressure: float):
-    gasDensity = tank.pressure/(gas.gasConstant*temperature)
-    
-    massFlowIn = massFlowOut*pressure/(gasDensity*gas.gasConstant*temperature) 
-    
-    # NOTE: the pressure shouldn't directly be an input, is a part of the chain
-    
-    return massFlowIn

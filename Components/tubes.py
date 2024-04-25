@@ -1,6 +1,6 @@
 # AEther 23-24 
 # Creation: 15/02/2024
-# Last edit: 21/03/2024
+# Last edit: 25/04/2024
 # It models conducts be they straight or curved and the pressure losses incurred
 
 
@@ -89,7 +89,7 @@ def dPDarcyWeisbach(fluid: fluids.Fluid, tube: Conduit, massFlow: float):
 
 def dPBend(fluid:fluids.Fluid,bend:Bend,massFlow:float):
     
-    area = np.pi*(bend.diameter)**2/4 # Tube section
+    area = np.pi/4*(bend.diameter)**2 # Tube section
     u = massFlow/(area*fluid.density) # Speed inside of the conduit. Continuity equation
     nu = fluid.staticViscosity/fluid.density # Kinematic viscosity
     
@@ -104,7 +104,7 @@ def dPBend(fluid:fluids.Fluid,bend:Bend,massFlow:float):
     elif Re < 5000:
         lamb = 5/(Re**0.45)*(bend.diameter/(2*2*bend.radiusCurve))**(0.275)
     else:
-        print("Fuck")
+        print("ERROR: high Re regime achieved in " + bend.name + " (Re = " + str(Re) + ")")
         lamb = 1
         
     xi = 0.0175*lamb*bend.radiusCurve/bend.diameter*bend.angle
