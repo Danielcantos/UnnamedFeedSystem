@@ -1,6 +1,6 @@
 # AEther 23-24 
 # Creation: 15/02/2024
-# Last edit: 25/04/2024
+# Last edit: 01/05/2024
 # It models conducts be they straight or curved and the pressure losses incurred
 
 
@@ -87,7 +87,7 @@ def dPDarcyWeisbach(fluid: fluids.Fluid, tube: Conduit, massFlow: float):
     
     return dP
 
-def dPBend(fluid:fluids.Fluid,bend:Bend,massFlow:float):
+def dPBend(fluid:fluids.Fluid, bend:Bend, massFlow:float):
     
     area = np.pi/4*(bend.diameter)**2 # Tube section
     u = massFlow/(area*fluid.density) # Speed inside of the conduit. Continuity equation
@@ -95,19 +95,28 @@ def dPBend(fluid:fluids.Fluid,bend:Bend,massFlow:float):
     
     Re = u*bend.diameter/nu
     
-    if Re < 600:
-        lamb = 20/(Re**0.65)*(bend.diameter/(2*2*bend.radiusCurve))**(0.175)
+    if bend.radiusCurve/bend.diameter < 3: # Abrupt bend
+        # Despite it only being valid for Re > 2e5 we'll use it for all cases
+        lamb = 1/(1.8*np.log(Re)-1.64)**2
+        xi = 1.58*lamb*bend.radiusCurve/bend.diameter + 1.19
+
+    else: # Smooth bend
+        if Re*np.sqrt(bend.diameter/(2*bend.radiusCurve)) < 600:
+            lamb = 20/(Re**0.65)*(bend.diameter/(2*2*bend.radiusCurve))**(0.175)
         
-    elif Re < 1400:
-        lamb = 10.4/(Re**0.55)*(bend.diameter/(2*2*bend.radiusCurve))**(0.225)
+        elif Re*np.sqrt(bend.diameter/(2*bend.radiusCurve)) < 1400:
+            lamb = 10.4/(Re**0.55)*(bend.diameter/(2*2*bend.radiusCurve))**(0.225)
         
-    elif Re < 5000:
-        lamb = 5/(Re**0.45)*(bend.diameter/(2*2*bend.radiusCurve))**(0.275)
-    else:
-        print("ERROR: high Re regime achieved in " + bend.name + " (Re = " + str(Re) + ")")
-        lamb = 1
+        elif Re*np.sqrt(bend.diameter/(2*bend.radiusCurve)) < 5000:
+            lamb = 5/(Re**0.45)*(bend.diameter/(2*2*bend.radiusCurve))**(0.275)
+        else:
+            print("ERROR: high Re regime achieved in " + bend.name + " (Re = " + str(Re) + ")")
+            lamb = 0.05 # Worst case scenario from diagram 6.2
+            
+        xi = 0.0175*lamb*bend.angle*bend.radiusCurve/bend.diameter
+
         
-    xi = 0.0175*lamb*bend.radiusCurve/bend.diameter*bend.angle
+    
     dP = 1/2 * fluid.density * u**2 * xi
     
     return dP

@@ -6,7 +6,7 @@
 # - Stanislas Le Person
 # - Thomas Roberge
 
-# Last edit: 25/04/2024 
+# Last edit: 01/05/2024 
 
 # Definition of the system
 # - Components
@@ -52,14 +52,14 @@ def dPGetter(component, node: Node):
     dP = 0
     match type(component):
         case tubes.Conduit:
-            if type(node.substance) is fluids.Fluid:
+            if type(node.substance) is fluids.Fluid: # It's a liquid
                 dP = tubes.dPDarcyWeisbach(node.substance,component,node.mdot)
-            else:
+            else: # It's a gas
                 dP = 0        
         case tubes.Bend:
-            if type(node.substance) is fluids.Fluid:
+            if type(node.substance) is fluids.Fluid: # It's a liquid
                 dP = tubes.dPBend(node.substance,component,node.mdot)
-            else:
+            else: # It's a gas
                 dP = 0
         case valves.Valve:
             if type(node.substance) is fluids.Fluid: # It's a liquid
@@ -80,15 +80,24 @@ def dPGetter(component, node: Node):
                 dP = valves.dPZapataGas(node.substance,component,node.mdot,node.T,node.P)
                 
         case valves.CheckValve:
-            if type(node.substance) is fluids.Fluid:
+            if type(node.substance) is fluids.Fluid: # It's a liquid
+                S = np.pi/4*component.diameter**2
+                v  = node.mdot/(S*node.substance.density)
                 dP = valves.dPCheckValve(node.substance,component,v)
-            else:
-                dP = valves.dPZapataLiquid(node.substance,component,node.mdot)
+            else: # It's a gas
+                dP = valves.dPZapataGas(node.substance,component,node.mdot,node.T,node.P)
+        
+        case reliefs.BurstDisk:
+            if node.P > component.burstPressure:
+                print("Burst disk has been triggered")
                 
-        case reservoirs.Tank:
-            print("a")
-        case pressureReducers.PressureReducer:
-            print("a")
+            dP = 0
+            
+        #case reservoirs.Tank:
+        #    print("a")
+        #case pressureReducers.PressureReducer:
+        #    print("a")
+        
         case _: 
             print("Error")
     
@@ -121,8 +130,8 @@ print("--------------------------------------------")
 # -------------------------------------------------------
 
 # Objective mass flow
-mdot = 0.5 # in kg/s
-inputPressure = 50e5 # in Pa, defined at the entry of the injector
+mdot = 0.1 # in kg/s
+inputPressure = 15e5 # in Pa, defined at the entry of the injector
 
 # -------------------------------------------------------
 # HYDRAULIC CHAIN SETUP (INPUT)
@@ -181,20 +190,36 @@ NodeChain = [] # From the injector upstream
 
 NodeChain.append(Node(inputPressure,mdot,Water,Tamb))
 
-#dP = tubes.dPDarcyWeisbach(NodeChain[i].substance,HydraulicChain[len(HydraulicChain)-1],NodeChain[i].mdot)
-
-#print(NodeChain[i].P)
-#NodeNext = Node(NodeChain[i].P + dP,NodeChain[i].mdot,NodeChain[i].substance)
-#NodeChain.append(NodeNext)
-#print(NodeChain[i+1].P)
+dt = 0.1 # NOTE: placeholder, only used for interface update
 
 for i, component in enumerate(reversed(HydraulicChain)):
-    NextNode = NodeChain[i]
-    dP = dPGetter(HydraulicChain[-1-i],NodeChain[i])
-    print(component.name + " dP = " + str(dP))
-    NextNode.P += dP
-    NodeChain.append(NextNode)
+    NextNode = NodeChain[i] # NOTE: will need to do i+1 if we put a node inside chamber
     
-    if i == 6:
+    match type(component): # To handle all component not strictly linked to a single dP
+        case reservoirs.Tank:
+            dPo = reservoirs.dPOut(component,NodeChain[i].mdot)
+            print("Outlet " + component.name + " dP = " + str(dPo))
+            
+            # Managing the tank component
+            component.pressure = NextNode.P + dPo # Intermediate tank pressure inside of the tank class
+            reservoirs.updateInterface(component,NextNode.mdot,dt) # Propellant is drained from the tank
+             
+            # Change of substance >> Change of mass flow
+            NextNode.mdot = reservoirs.densityInterface(component,NodeChain[i].mdot,NodeChain[i].T,component.pressure)
+                        
+            dPi = reservoirs.dPIn(component,NextNode.mdot,NextNode.T)
+            print("Inlet " + component.name + " dP = " + str(dPi))
+            
+            NextNode.P += dPo + dPi
+            NodeChain.append(NextNode)
+            
+        case pressureReducers.PressureReducer:
+            print("a")
+        case _:
+            dP = dPGetter(HydraulicChain[-1-i],NodeChain[i])
+            print(component.name + " dP = " + str(dP))
+            NextNode.P += dP
+            NodeChain.append(NextNode)
+       
+    if i == 14:
         break
-

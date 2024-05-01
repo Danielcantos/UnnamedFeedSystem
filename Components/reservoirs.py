@@ -1,6 +1,6 @@
 # AEther 23-24
 # Creation: 16/02/2024
-# Last edit: 25/04/2024
+# Last edit: 01/05/2024
 # Two phase containers where the propellant is kept until forced out via pressurization
 
 # Native libraries
@@ -48,9 +48,7 @@ def updateInterface(tank: Tank, mdotOut: float, dt: float):
     tank.interface.positionInterface += displacementInterface
 
 def densityInterface(tank: Tank, massFlowOut: float, temperature: float, pressure: float):
-    gasDensity = tank.pressure/(tank.interface.upstreamSubstance.gasConstant*temperature)
-    
-    massFlowIn = massFlowOut*pressure/(gasDensity*tank.interface.upstreamSubstance.gasConstant*temperature) 
+    massFlowIn = massFlowOut*pressure/(tank.interface.upstreamSubstance.gasConstant*temperature*tank.interface.downstreamSubstance.density) 
     
     # NOTE: the pressure shouldn't directly be an input, is a part of the chain
     
@@ -115,16 +113,29 @@ def xiOutput(fluid: fluids.Fluid, tank: Tank, massFlow: float):
 # PRESSURE LOSSES
 # ----------------------------------------------------
 
-def dPIn(tank: Tank, massFlowIn: float, speed: float, temperature: float):
+def dPIn(tank: Tank, massFlowIn: float, temperature: float):
+    area = np.pi*(tank.diameter)**2/4 # Tube section
+    gasDensity = tank.pressure/(tank.interface.upstreamSubstance.gasConstant*temperature) # Ideal gas
+    w0 = massFlowIn/(area*gasDensity) # Speed inside of the conduit. Continuity equation
+    
     fD = 0.0 # Friction with gas assumed negligible
     xi = xiInput(tank.interface.upstreamSubstance,tank,massFlowIn, temperature)
-    gasDensity = tank.pressure/(tank.interface.upstreamSubstance.gasConstant*temperature)
-    dP = (xi + fD*tank.interface.positionInterface/tank.diameter)*gasDensity*speed**2/2
+    
+    dPIn = (xi + fD*tank.interface.positionInterface/tank.diameter)*gasDensity*w0**2/2
+    
+    return dPIn
 
-def dPOut(tank: Tank, massFlowOut: float, speed: float):   
+def dPOut(tank: Tank, massFlowOut: float):   
+    area = np.pi*(tank.diameter)**2/4 # Tube section
+    rho = tank.interface.downstreamSubstance.density # Assumed incompressible
+    w1 = massFlowOut/(area*rho) # Speed inside of the conduit. Continuity equation
+    
     fD = frictionFactor(tank.interface.downstreamSubstance,tank,massFlowOut)
     xi = xiOutput(tank.interface.downstreamSubstance,tank,massFlowOut)
-    dPOut = (xi + fD*(tank.length-tank.interface.positionInterface)/tank.diameter)*tank.interface.downstreamSubstance.density*speed**2/2
+    
+    dPOut = (xi + fD*(tank.length-tank.interface.positionInterface)/tank.diameter)*tank.interface.downstreamSubstance.density*w1**2/2
+    
+    return dPOut
 
 def dPTot(tank: Tank, massFlowOut: float, temperature: float, pressure: float):
     area = np.pi*(tank.diameter)**2/4 # Tube section
