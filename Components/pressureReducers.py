@@ -1,11 +1,10 @@
 # AEther 23-24
 # Creation: 16/02/2024
-# Last edit: 16/04/2024
+# Last edit: 01/05/2024
 # It models pressure reducers that contain an incoming flow and deliver a set output pressure no matter it
 
 # Native libraries
 import numpy as np
-import scipy
 import sys
 
 # Custom libraries
@@ -33,17 +32,23 @@ class PressureReducer:
 # Only the "reverse mode" is coded, that is, knowing the mass flow and the pressure at the output
 def interpolatePressure(pressureReducer: PressureReducer, outputPressure: float, mdot: float):
     Pins = []
-    mdots = []
+    Pouts = []
     for pressureCurve in pressureReducer.pressureData:
-        try:
-            interpFunc = scipy.interpolate.interp1d(pressureCurve.Pout,pressureCurve.mdot)
-            mdotTest = interpFunc(outputPressure) # NOTE: this will crash if the interpolation falls in a horizontal section of the curve
-            Pins.append(pressureCurve.Pin)
-            mdots.append(mdotTest)
-        except:
+        
+        f_found = False # Flag marking if the objective could be interpolated in the present curve
+        for i, valueMdot in enumerate(pressureCurve.mdot):
+            if valueMdot < mdot:
+                continue
+            else: 
+                PoutInterp = pressureCurve.Pout[i-1] + (pressureCurve.Pout[i] - pressureCurve.Pout[i-1])/(pressureCurve.mdot[i] - pressureCurve.mdot[i-1])*(mdot - pressureCurve.mdot[i-1])
+                Pins.append(pressureCurve.Pin)
+                Pouts.append(PoutInterp)
+                f_found = True
+                break
+        
+        if not f_found:
             print("No interpolation available with curve with Pin = " + str(pressureCurve.Pin) + " Pa")
-            # Just skip it
-            
+                      
     # At this moment three scenarios might present themselves:
     # - No interpolation have been done --> program must give an error
     # - Only one curve is compatible --> linear approximation #NOTE: for now, this is CRAP
@@ -54,8 +59,13 @@ def interpolatePressure(pressureReducer: PressureReducer, outputPressure: float,
         return False
     elif len(Pins) == 1:
         # Test  
-        c = 1.2  # NOTE: this is EVIL, it assumes linear proportionality between mass flow and input pressure input --> put a value based on reality
-        return c*Pins[0]/mdots[0]*mdot
+        c = Pins[0]/Pouts[0] # NOTE: this is evil
+        return c*outputPressure
     else:
-        interpFunc = scipy.interpolate.interp1d(mdots,Pins)
-        return interpFunc(mdot)
+        
+        for i, valuePout in enumerate(Pouts):
+            if valuePout < outputPressure:
+                continue
+            else:
+                PinInterp = Pins[i-1] + (Pins[i]-Pins[i-1])/(Pouts[i]-Pouts[i-1])*(outputPressure-Pouts[i-1])
+                return PinInterp

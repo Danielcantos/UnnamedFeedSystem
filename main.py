@@ -144,7 +144,8 @@ HydraulicChain = []
 R1 = sources.Cylinder("R1",120e5,5e-3)
 MV1 = valves.Valve("MV1",True,"Ball","Manual",0.064)
 C1 = tubes.Conduit("C1",0.1,0.003,0.064,Aluminium) # 10 cm tube, 3 mm thick, 1/4" diam NOTE: placeholder
-PR1 = pressureReducers.PressureReducer("PR1",[pressureReducers.PressureCurve(100e5,np.array([0.5, 0.6, 0.7]), [70e5, 60e5, 50e5])])
+PR1 = pressureReducers.PressureReducer("PR1",[pressureReducers.PressureCurve(30e5,np.array([0,1]), [20e5, 20e5])])
+PR1.addPressureCurve(pressureReducers.PressureCurve(10e5,np.array([0,1]), [5e5, 5e5]))
 C2 = tubes.Conduit("C2",0.1,0.003,0.064,Aluminium)
 CV1 = valves.CheckValve("CV1",True,"Ball","Manual",0.064)
 C3 = tubes.Conduit("C3",0.1,0.003,0.064,Aluminium)
@@ -193,12 +194,13 @@ NodeChain.append(Node(inputPressure,mdot,Water,Tamb))
 dt = 0.1 # NOTE: placeholder, only used for interface update
 
 for i, component in enumerate(reversed(HydraulicChain)):
+    print("Current pressure = " + str(NodeChain[i].P) + " Pa")
     NextNode = NodeChain[i] # NOTE: will need to do i+1 if we put a node inside chamber
     
     match type(component): # To handle all component not strictly linked to a single dP
         case reservoirs.Tank:
             dPo = reservoirs.dPOut(component,NodeChain[i].mdot)
-            print("Outlet " + component.name + " dP = " + str(dPo))
+            print("Outlet " + component.name + " dP = " + str(dPo) + " Pa")
             
             # Managing the tank component
             component.pressure = NextNode.P + dPo # Intermediate tank pressure inside of the tank class
@@ -208,18 +210,21 @@ for i, component in enumerate(reversed(HydraulicChain)):
             NextNode.mdot = reservoirs.densityInterface(component,NodeChain[i].mdot,NodeChain[i].T,component.pressure)
                         
             dPi = reservoirs.dPIn(component,NextNode.mdot,NextNode.T)
-            print("Inlet " + component.name + " dP = " + str(dPi))
+            print("Inlet " + component.name + " dP = " + str(dPi) + " Pa")
             
             NextNode.P += dPo + dPi
             NodeChain.append(NextNode)
             
         case pressureReducers.PressureReducer:
-            print("a")
+            Pin = pressureReducers.interpolatePressure(component,NodeChain[i].P,NodeChain[i].mdot)
+            NextNode.P = Pin
+            print(component.name + " input pressure = " + str(Pin) + " Pa")
+            NodeChain.append(NextNode)
         case _:
             dP = dPGetter(HydraulicChain[-1-i],NodeChain[i])
-            print(component.name + " dP = " + str(dP))
+            print(component.name + " dP = " + str(dP) + " Pa")
             NextNode.P += dP
             NodeChain.append(NextNode)
        
-    if i == 14:
+    if i == 17:
         break
