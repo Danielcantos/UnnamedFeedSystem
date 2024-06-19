@@ -6,7 +6,7 @@
 # - Stanislas Le Person
 # - Thomas Roberge
 
-# Last edit: 01/05/2024 
+# Last edit: 19/06/2024 
 
 # Definition of the system
 # - Components
@@ -28,6 +28,7 @@ import pressureReducers
 import sources
 import reliefs
 import reservoirs
+import injectors
 
 sys.path.insert(1, './Substances')
 import fluids
@@ -93,6 +94,12 @@ def dPGetter(component, node: Node):
                 
             dP = 0
             
+        case injectors.Injector:
+            if type(node.substance) is fluids.Fluid: # It's a liquid
+                dP = injectors.dP(node.substance,component,node.mdot)
+            else: # It's a gas
+                print("Why are you injecting a gas?")
+            
         #case reservoirs.Tank:
         #    print("a")
         #case pressureReducers.PressureReducer:
@@ -130,8 +137,8 @@ print("--------------------------------------------")
 # -------------------------------------------------------
 
 # Objective mass flow
-mdot = 0.1 # in kg/s
-inputPressure = 15e5 # in Pa, defined at the entry of the injector
+mdot = 0.2 # in kg/s
+inputPressure = 1e5 # in Pa, defined at the exit of the injector
 
 # -------------------------------------------------------
 # HYDRAULIC CHAIN SETUP (INPUT)
@@ -144,8 +151,8 @@ HydraulicChain = []
 R1 = sources.Cylinder("R1",120e5,5e-3)
 MV1 = valves.Valve("MV1",True,"Ball","Manual",0.064)
 C1 = tubes.Conduit("C1",0.1,0.003,0.064,Aluminium) # 10 cm tube, 3 mm thick, 1/4" diam NOTE: placeholder
-PR1 = pressureReducers.PressureReducer("PR1",[pressureReducers.PressureCurve(30e5,np.array([0,1]), [20e5, 20e5])])
-PR1.addPressureCurve(pressureReducers.PressureCurve(10e5,np.array([0,1]), [5e5, 5e5]))
+PR1 = pressureReducers.PressureReducer("PR1",[pressureReducers.PressureCurve(400e5,np.array([0,1]), [120e5, 120e5])])
+PR1.addPressureCurve(pressureReducers.PressureCurve(1e5,np.array([0,1]), [1e5, 1e5]))
 C2 = tubes.Conduit("C2",0.1,0.003,0.064,Aluminium)
 CV1 = valves.CheckValve("CV1",True,"Ball","Manual",0.064)
 C3 = tubes.Conduit("C3",0.1,0.003,0.064,Aluminium)
@@ -161,6 +168,7 @@ SV2 = valves.Valve("SV2",True,"Ball","Solenoid",0.064)
 C8 = tubes.Conduit("C8",0.1,0.003,0.064,Aluminium)
 MV4 = valves.Valve("MV4",True,"Ball","Manual",0.064)
 C9 = tubes.Conduit("C9",0.1,0.003,0.064,Aluminium)
+I1 = injectors.Injector("I1",0.3433,0.4067,Steel)
 
 # Definition of the chain
 HydraulicChain.append(R1)
@@ -182,6 +190,7 @@ HydraulicChain.append(SV2)
 HydraulicChain.append(C8)
 HydraulicChain.append(MV4)
 HydraulicChain.append(C9)
+HydraulicChain.append(I1)
 
 # -------------------------------------------------------
 # NODE CHAIN EXECUTION
@@ -226,5 +235,6 @@ for i, component in enumerate(reversed(HydraulicChain)):
             NextNode.P += dP
             NodeChain.append(NextNode)
        
-    if i == 17:
+    if i == 18:
+        print("Pressurizer mass flow: " + str(NextNode.mdot))
         break
