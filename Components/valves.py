@@ -1,15 +1,8 @@
 # AEther 23-24
 # Creation: 15/02/2024
-# Last edit: 25/04/2024
+# Last edit: 07/07/2024
 # It models valves no matter type, elements that can be closed or opened and 
 # through which a small amount of pressure is lost
-
-# - Valve.py 
-# - INPUT:
-# -- Pin, coefficient
-# -- Pin, geometry, type
-# - OUTPUT:
-# -- dP
 
 # Native libraries
 import numpy as np
@@ -23,12 +16,13 @@ import materials
 
 # CLASS AND SUBCLASS DECLARATION
 class Valve:
-        def __init__(self,name:str,state:bool,type:str,actuation:str,diameter:float): 
+        def __init__(self,name:str,state:bool,type:str,actuation:str,diameter:float,coefficient:float): 
                 self.name = name # Identifier on the PI&D
                 self.type = type
                 self.state = state # Closed (0) or Opened (1)
                 self.actuation = actuation # Manual, solenoid or pneumatic
                 self.diameter = diameter # Valve diameter
+                self.coefficient = coefficient # 0 if no coefficient
                 
         def open(self):
             self.state = True
@@ -51,9 +45,9 @@ class CheckValve:
             self.state = False
 
 
-# Pressure drop in valves
+# Pressure drop in valves (from analytical equations)
 
-def dPBallValve(fluid:fluids.Fluid, valve:Valve, delta:float,velocity:float):
+def dPBallValve(fluid:fluids.Fluid,valve:Valve,delta:float,velocity:float):
     # delta: opening angle of the ball valve
     xi = 0.0946*np.exp(0.1106*delta)
     dP = 1/2 * fluid.density * velocity**2 * xi
@@ -93,7 +87,23 @@ def dPCheckValve(fluid:fluids.Fluid,valve:Valve,velocity:float):
     
     return dp
 
-# Zapata functions
+# Pressure drop in valves (from product data)
+
+def dPKvLiquid(fluid:fluids.Fluid,valve:Valve,massFlow:float):
+    # Mass flow is assumed given in kg/s and therefore needs to be changed into L/min
+    Q = massFlow/fluid.density*60*1000 # In L/min
+    dP = fluid.density/1000*(Q/valve.coefficient)**2 # In bar
+    
+    return dP*1e5
+
+def dPKvGas(fluid:gases.Gas,valve:Valve,massFlow:float,temperature:float,pressure:float):
+    rho = pressure/(fluid.gasConstant*temperature)
+    Q = massFlow/rho*60*1000 # In L/min
+    dP = rho/1000*(Q/valve.coefficient)**2 # In bar
+    
+    return dP*1e5
+        
+# Pressure drop in valves (from Zapata functions)
 
 def dPZapataLiquid(fluid: fluids.Fluid, valve: Valve, massFlow: float):
     # Equation presented by Zapata in his S3 project report
@@ -133,4 +143,3 @@ def dPZapataGas(fluid: gases.Gas, valve: Valve, massFlow: float, temperature: fl
         
     dP = 1E5*SG*temperature/(8062**2*pressure)*(Qg/Kf)**2
     return dP
-

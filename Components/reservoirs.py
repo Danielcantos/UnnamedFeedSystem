@@ -1,6 +1,6 @@
 # AEther 23-24
 # Creation: 16/02/2024
-# Last edit: 01/05/2024
+# Last edit: 07/07/2024
 # Two phase containers where the propellant is kept until forced out via pressurization
 
 # Native libraries
@@ -87,10 +87,23 @@ def xiInput(gas: gases.Gas, tank: Tank, massFlowIn: float, temperature: float):
     
     Re = u*tank.diameter/nu
     
+    FF = tank.inputDiameter/tank.diameter
+    
     if Re > 3.5e3:
-        xi = (1-tank.inputDiameter**2/tank.diameter**2)**2
+        xi = (1-FF)**2
+    elif Re > 500:
+        xi = -8.44556 - 26.163*(1-FF)**2 - 5.3808*(1-FF)**4 + \
+        np.log10(Re)*(6.007 + 18.5372*(1-FF)**2  + 3.9978*(1-FF)**4) + \
+        (np.log10(Re))**2*(-1.02318 - 3.091691*(1-FF)**2 - 0.680943*(1-FF)**4)
+    elif Re > 10:
+        xi = 3.62536 + 10.744*(1-FF)**2 - 4.41041*(1-FF)**4 + \
+        1/np.log10(Re)*(-18.13 - 56.77855*(1-FF)**2 + 33.40344*(1-FF)**4) + \
+        1/(np.log10(Re))**2*(30.8558 + 99.9542*(1-FF)**2 - 62.78*(1-FF)**4) + \
+        1/(np.log10(Re))**3*(-13.217 - 53.955*(1-FF)**2 + 33.8053*(1-FF)**4)
     else:
-        xi = 4.3*np.power(Re,-0.16)
+        xi = 30/Re
+        
+        #xi = 4.3*np.power(Re,-0.16) # NOTE: old Louis Urbin adjustment (2024)
         
     return xi
 
@@ -103,7 +116,7 @@ def xiOutput(fluid: fluids.Fluid, tank: Tank, massFlow: float):
     Re = u*tank.diameter/nu
     
     if Re > 1e4:
-        xi =0.5*(1-tank.inputDiameter**2/tank.diameter**2)
+        xi = 0.5*(1-tank.inputDiameter**2/tank.diameter**2)
     else:
         xi = 6.8*np.power(Re,-0.31)
         
