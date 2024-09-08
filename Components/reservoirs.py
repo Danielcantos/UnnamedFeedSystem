@@ -1,6 +1,6 @@
 # AEther 23-24
 # Creation: 16/02/2024
-# Last edit: 07/07/2024
+# Last edit: 20/07/2024
 # Two phase containers where the propellant is kept until forced out via pressurization
 
 # Native libraries
@@ -10,7 +10,6 @@ import sys
 # Custom libraries
 sys.path.insert(0, './Substances')
 import fluids
-import gases
 import materials
 
 # ----------------------------------------------------
@@ -18,7 +17,7 @@ import materials
 # ----------------------------------------------------
 
 class TankInterface:
-    def __init__(self, upstreamSubstance: gases.Gas, downstreamSubstance: fluids.Fluid, positionInterface: float):
+    def __init__(self, upstreamSubstance: fluids.Gas, downstreamSubstance: fluids.Liquid, positionInterface: float):
         self.upstreamSubstance = upstreamSubstance # Pressurizer gas
         self.downstreamSubstance = downstreamSubstance # Fluid
         self.positionInterface = positionInterface # With respects to the 
@@ -55,12 +54,12 @@ def densityInterface(tank: Tank, massFlowOut: float, temperature: float, pressur
     return massFlowIn
 
 # Helper functions pressure
-def frictionFactor (fluid: fluids.Fluid, tank: Tank, massFlow: float):
+def frictionFactor (fluid: fluids.Liquid, tank: Tank, massFlow: float):
     # Numerical and simplified implementation of the Darcy-Weisbach graph
     
     area = np.pi*(tank.diameter)**2/4 # Tube section
     u = massFlow/(area*fluid.density) # Speed inside of the conduit. Continuity equation
-    nu = fluid.staticViscosity/fluid.density # Kinematic viscosity
+    nu = fluid.dynamicViscosity/fluid.density # Kinematic viscosity
     
     Re = u*tank.diameter/nu
   
@@ -77,13 +76,13 @@ def frictionFactor (fluid: fluids.Fluid, tank: Tank, massFlow: float):
         
     return fD
 
-def xiInput(gas: gases.Gas, tank: Tank, massFlowIn: float, temperature: float):
+def xiInput(gas: fluids.Gas, tank: Tank, massFlowIn: float, temperature: float):
     
     gasDensity = tank.pressure/(gas.gasConstant*temperature)
 
     area = np.pi*(tank.diameter)**2/4 # Tube section
     u = massFlowIn/(area*gasDensity) # Speed inside of the conduit. Continuity equation
-    nu = gas.staticViscosity/gasDensity # Kinematic viscosity
+    nu = gas.dynamicViscosity/gasDensity # Kinematic viscosity
     
     Re = u*tank.diameter/nu
     
@@ -107,11 +106,11 @@ def xiInput(gas: gases.Gas, tank: Tank, massFlowIn: float, temperature: float):
         
     return xi
 
-def xiOutput(fluid: fluids.Fluid, tank: Tank, massFlow: float):
+def xiOutput(fluid: fluids.Liquid, tank: Tank, massFlow: float):
 
     area = np.pi*(tank.diameter)**2/4 # Tube section
     u = massFlow/(area*fluid.density) # Speed inside of the conduit. Continuity equation
-    nu = fluid.staticViscosity/fluid.density # Kinematic viscosity
+    nu = fluid.dynamicViscosity/fluid.density # Kinematic viscosity
     
     Re = u*tank.diameter/nu
     

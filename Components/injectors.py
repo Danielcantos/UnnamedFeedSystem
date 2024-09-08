@@ -1,6 +1,6 @@
 # AEther 23-24
 # Creation: 19/06/2024
-# Last edit: 19/06/2024
+# Last edit: 08/09/2024
 # It defines an injector from the characteristic curve of the component
 
 # Native libraries
@@ -10,7 +10,6 @@ import sys
 # Custom libraries
 sys.path.insert(0, './Substances')
 import fluids
-import gases
 import materials
 
 # ----------------------------------------------------
@@ -25,6 +24,6 @@ class Injector:
         self.material = material # Specific object type
         
 
-def dP(fluid:fluids.Fluid, injector:Injector, massFlow:float):
+def dP(fluid:fluids.Liquid, injector:Injector, massFlow:float):
     dP = 1e5*(massFlow/injector.linearCoefficient)**(1/injector.exponentialCoefficient)
     return dP

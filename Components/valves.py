@@ -1,6 +1,6 @@
 # AEther 23-24
 # Creation: 15/02/2024
-# Last edit: 07/07/2024
+# Last edit: 08/09/2024
 # It models valves no matter type, elements that can be closed or opened and 
 # through which a small amount of pressure is lost
 
@@ -11,7 +11,6 @@ import sys
 # Custom libraries
 sys.path.insert(0, './Substances')
 import fluids
-import gases
 import materials
 
 # CLASS AND SUBCLASS DECLARATION
@@ -22,7 +21,7 @@ class Valve:
                 self.state = state # Closed (0) or Opened (1)
                 self.actuation = actuation # Manual, solenoid or pneumatic
                 self.diameter = diameter # Valve diameter
-                self.coefficient = coefficient # 0 if no coefficient
+                self.coefficient = coefficient # The valve's Cv, -1 if there's no coefficient
                 
         def open(self):
             self.state = True
@@ -47,7 +46,7 @@ class CheckValve:
 
 # Pressure drop in valves (from analytical equations)
 
-def dPBallValve(fluid:fluids.Fluid,valve:Valve,delta:float,velocity:float):
+def dPBallValve(fluid:fluids.Liquid,valve:Valve,delta:float,velocity:float):
     # delta: opening angle of the ball valve
     xi = 0.0946*np.exp(0.1106*delta)
     dP = 1/2 * fluid.density * velocity**2 * xi
@@ -55,16 +54,16 @@ def dPBallValve(fluid:fluids.Fluid,valve:Valve,delta:float,velocity:float):
     return dP
     
 
-def dPButterflyValve(fluid:fluids.Fluid,valve:Valve,delta:float,velocity:float):
+def dPButterflyValve(fluid:fluids.Liquid,valve:Valve,delta:float,velocity:float):
     
-    Re = fluid.density*velocity*valve.diameter/fluid.viscosity
+    Re = fluid.density*velocity*valve.diameter/fluid.dynamicViscosity
     xi = 1/Re + 1 - 50/Re * 0.3166 * np.exp(0.0958 * delta)
     dP = 1/2 * fluid.density * velocity**2 * xi
     
     return dP
 
 
-def dPGateValve(fluid:fluids.Fluid,valve:Valve,height:float,velocity:float):  #change Fluid by N2 or H2O2
+def dPGateValve(fluid:fluids.Liquid,valve:Valve,height:float,velocity:float):  #change Fluid by N2 or H2O2
     
     xi = 116.34 * np.exp(-7.98 * height / valve.diameter)
     dp = 1/2 * fluid.density * velocity**2 * xi
@@ -72,7 +71,7 @@ def dPGateValve(fluid:fluids.Fluid,valve:Valve,height:float,velocity:float):  #c
     return dp
 
 
-def dPGlobeValve(fluid:fluids.Fluid,valve:Valve,velocity:float):
+def dPGlobeValve(fluid:fluids.Liquid,valve:Valve,velocity:float):
     
     xi = 1.0973 * valve.diameter**(-0.5955)
     dp = 1/2 * fluid.density * velocity**2 * xi
@@ -80,7 +79,7 @@ def dPGlobeValve(fluid:fluids.Fluid,valve:Valve,velocity:float):
     return dp
 
 
-def dPCheckValve(fluid:fluids.Fluid,valve:Valve,velocity:float):
+def dPCheckValve(fluid:fluids.Liquid,valve:Valve,velocity:float):
     
     xi = 1.07 + 5.16 * valve.diameter - 6.71 * valve.diameter**2 + 4.93 * valve.diameter**3
     dp = 1/2 * fluid.density * velocity**2 * xi
@@ -89,14 +88,14 @@ def dPCheckValve(fluid:fluids.Fluid,valve:Valve,velocity:float):
 
 # Pressure drop in valves (from product data)
 
-def dPKvLiquid(fluid:fluids.Fluid,valve:Valve,massFlow:float):
+def dPKvLiquid(fluid:fluids.Liquid,valve:Valve,massFlow:float):
     # Mass flow is assumed given in kg/s and therefore needs to be changed into L/min
     Q = massFlow/fluid.density*60*1000 # In L/min
     dP = fluid.density/1000*(Q/valve.coefficient)**2 # In bar
     
     return dP*1e5
 
-def dPKvGas(fluid:gases.Gas,valve:Valve,massFlow:float,temperature:float,pressure:float):
+def dPKvGas(fluid:fluids.Gas,valve:Valve,massFlow:float,temperature:float,pressure:float):
     rho = pressure/(fluid.gasConstant*temperature)
     Q = massFlow/rho*60*1000 # In L/min
     dP = rho/1000*(Q/valve.coefficient)**2 # In bar
@@ -105,7 +104,7 @@ def dPKvGas(fluid:gases.Gas,valve:Valve,massFlow:float,temperature:float,pressur
         
 # Pressure drop in valves (from Zapata functions)
 
-def dPZapataLiquid(fluid: fluids.Fluid, valve: Valve, massFlow: float):
+def dPZapataLiquid(fluid: fluids.Liquid, valve: Valve, massFlow: float):
     # Equation presented by Zapata in his S3 project report
     # NOTE: we assume all inputs are in SI
     # - Ql is the mass flow needs to be in m3/h
@@ -124,7 +123,7 @@ def dPZapataLiquid(fluid: fluids.Fluid, valve: Valve, massFlow: float):
     dP = 1E5*SG*(Ql/Kf)**2
     return dP
    
-def dPZapataGas(fluid: gases.Gas, valve: Valve, massFlow: float, temperature: float, pressure: float):
+def dPZapataGas(fluid: fluids.Gas, valve: Valve, massFlow: float, temperature: float, pressure: float):
     # Equation presented by Zapata in his S3 project report
     # NOTE: we assume all inputs are in SI
     # - Qg is the mass flow needs to be in L/min

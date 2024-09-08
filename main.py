@@ -3,10 +3,9 @@
 # - Daniel Cantos Gálvez (danielcantosgalvez@gmail.com)
 # - Hemanth Alapati
 # - Louis Urbin
-# - Stanislas Le Person
 # - Thomas Roberge
 
-# Last edit: 07/07/2024 
+# Last edit: 08/09/2024 
 
 # Definition of the system
 # - Components
@@ -32,17 +31,16 @@ import injectors
 
 sys.path.insert(1, './Substances')
 import fluids
-import gases
 import materials
 
 # ---------------------------------------
 # MAIN CLASSES 
 # ---------------------------------------
 class Node:
-    def __init__(self, P:float, mdot:float, substance, T:float):
+    def __init__(self, P:float, mdot:float, fluid, T:float):
         self.P = P
         self.mdot = mdot
-        self.substance = substance
+        self.fluid = fluid
         self.T = T
         
 # ---------------------------------------
@@ -53,42 +51,55 @@ def dPGetter(component, node: Node):
     dP = 0
     match type(component):
         case tubes.Conduit:
-            if type(node.substance) is fluids.Fluid: # It's a liquid
-                dP = tubes.dPDarcyWeisbach(node.substance,component,node.mdot)
+            if type(node.fluid) is fluids.Liquid: # It's a liquid
+                dP = tubes.dPDarcyWeisbach(node.fluid,component,node.mdot)
             else: # It's a gas
                 dP = 0   
                      
         case tubes.Bend:
-            if type(node.substance) is fluids.Fluid: # It's a liquid
-                dP = tubes.dPBend(node.substance,component,node.mdot)
+            if type(node.fluid) is fluids.Liquid: # It's a liquid
+                dP = tubes.dPBend(node.fluid,component,node.mdot)
             else: # It's a gas
                 dP = 0
-                
+    
         case valves.Valve:
-            if type(node.substance) is fluids.Fluid: # It's a liquid
+            if type(node.fluid) is fluids.Liquid: # It's a liquid
                 S = np.pi/4*component.diameter**2
-                v  = node.mdot/(S*node.substance.density)
-                match component.type.lower():
-                    case "ball":
-                        dP = valves.dPBallValve(node.substance,component,0.0,v)
-                    case "butterfly":
-                        dP = valves.dPButterflyValve(node.substance,component,0.0,v)
-                    case "gate":
-                        dP = valves.dPGateValve(node.substance,component,component.diameter,v)
-                    case "globe":
-                        dP = valves.dPGlobeValve(node.substance,component,v)
-                    case _:
-                        dP = valves.dPZapataLiquid(node.substance,component,node.mdot)
+                v  = node.mdot/(S*node.fluid.density)
+                if component.coefficient > 0: # There is a defined coefficient
+                    # https://www.pipeflow.com/public/PipeFlowExpertSoftwareHelp/html/CvandKvFlowCoefficients1.html
+                    Q = 3600/node.density*node.mdot # Assumed kg/s, transformed into m3/h
+                    dP = node.density/1000*(Q/component.coefficient)**2 # In bar by default
+                    dP = dP*1E-5 # In Pa
+                else:
+                    match component.type.lower():
+                        case "ball":
+                            dP = valves.dPBallValve(node.fluid,component,0.0,v)
+                        case "butterfly":
+                            dP = valves.dPButterflyValve(node.fluid,component,0.0,v)
+                        case "gate":
+                            dP = valves.dPGateValve(node.fluid,component,component.diameter,v)
+                        case "globe":
+                            dP = valves.dPGlobeValve(node.fluid,component,v)
+                        case _:
+                            dP = valves.dPZapataLiquid(node.fluid,component,node.mdot)
             else: # It's a gas
-                dP = valves.dPZapataGas(node.substance,component,node.mdot,node.T,node.P)
+                if component.coefficient > 0: # There is a defined coefficient
+                    # https://www.samsongroup.com/document/t00050en.pdf
+                    Q = 3600/node.density*node.mdot # Assumed kg/s, transformed into m3/h
+                    rhoG = 101325/(node.fluid.gasConstant*273) # Density at atmospheric pressure and 0 ºC
+                    dP = (Q/(514*node.coefficient))**2*(rhoG*node.T)/node.P
+                    
+                else:
+                    dP = valves.dPZapataGas(node.fluid,component,node.mdot,node.T,node.P)
                 
         case valves.CheckValve:
-            if type(node.substance) is fluids.Fluid: # It's a liquid
+            if type(node.fluid) is fluids.Liquid: # It's a liquid
                 S = np.pi/4*component.diameter**2
-                v  = node.mdot/(S*node.substance.density)
-                dP = valves.dPCheckValve(node.substance,component,v)
+                v  = node.mdot/(S*node.fluid.density)
+                dP = valves.dPCheckValve(node.fluid,component,v)
             else: # It's a gas
-                dP = valves.dPZapataGas(node.substance,component,node.mdot,node.T,node.P)
+                dP = valves.dPZapataGas(node.fluid,component,node.mdot,node.T,node.P)
         
         case reliefs.BurstDisk:
             if node.P > component.burstPressure:
@@ -97,21 +108,15 @@ def dPGetter(component, node: Node):
             dP = 0
             
         case injectors.Injector:
-            if type(node.substance) is fluids.Fluid: # It's a liquid
-                dP = injectors.dP(node.substance,component,node.mdot)
+            if type(node.fluid) is fluids.Liquid: # It's a liquid
+                dP = injectors.dP(node.fluid,component,node.mdot)
             else: # It's a gas
                 print("Why are you injecting a gas?")
             
-        #case reservoirs.Tank:
-        #    print("a")
-        #case pressureReducers.PressureReducer:
-        #    print("a")
-        
         case _: 
             print("Error")
     
     return dP      
-    #if type(component) is tubes.Conduit:
         
 
 # ---------------------------------------
@@ -124,10 +129,10 @@ Tamb = 293 # in K
 # Fluids and materials used
 Aluminium = materials.Material("Aluminium",2100,150e6,70e9, 0.1e-6)
 Steel = materials.Material("Steel",7800,550e6,210e9, 0.25e-6)
-Water = fluids.Fluid("Water",1000,8.9e-4)
-NitrogenLiquid = fluids.Fluid("NitrogenLiquid",806.1,17.81e-6) # Air Liquide (kg/m3), 
-Nitrogen = gases.Gas("Nitrogen",17.5e-6,296.8)
-HydrogenPeroxide = fluids.Fluid("H2O2",1369.6,1.24e-3) # Overleaf regression (kg/m3), 
+Water = fluids.Liquid("Water",1000,8.9e-4)
+NitrogenLiquid = fluids.Liquid("NitrogenLiquid",806.1,17.81e-6) # Air Liquide (kg/m3), 
+Nitrogen = fluids.Gas("Nitrogen",17.5e-6,296.8)
+HydrogenPeroxide = fluids.Liquid("H2O2",1369.6,1.24e-3) # Overleaf regression (kg/m3), 
 
 
 print("--------------------------------------------")
@@ -151,14 +156,14 @@ HydraulicChain = []
 
 # List of components, in order
 R1 = sources.Cylinder("R1",120e5,5e-3)
-MV1 = valves.Valve("MV1",True,"Ball","Manual",0.064,0)
+MV1 = valves.Valve("MV1",True,"Ball","Manual",0.064,-1)
 C1 = tubes.Conduit("C1",0.1,0.003,0.064,Aluminium) # 10 cm tube, 3 mm thick, 1/4" diam NOTE: placeholder
 PR1 = pressureReducers.PressureReducer("PR1",[pressureReducers.PressureCurve(400e5,np.array([0,1]), [120e5, 120e5])])
 PR1.addPressureCurve(pressureReducers.PressureCurve(1e5,np.array([0,1]), [1e5, 1e5]))
 C2 = tubes.Conduit("C2",0.1,0.003,0.064,Aluminium)
 CV1 = valves.CheckValve("CV1",True,"Ball","Manual",0.064)
 C3 = tubes.Conduit("C3",0.1,0.003,0.064,Aluminium)
-SV1 = valves.Valve("SV1",True,"Ball","Solenoid",0.064,0)
+SV1 = valves.Valve("SV1",True,"Ball","Solenoid",0.064,-1)
 C4 = tubes.Conduit("C4",0.1,0.003,0.064,Aluminium)
 BD1 = reliefs.BurstDisk("BD1",False,100e5)
 C5 = tubes.Conduit("C5",0.1,0.003,0.064,Aluminium)
@@ -166,9 +171,9 @@ R2 = reservoirs.Tank("R2",1e5,5e-3, 160e-3, 3e-3, 0.064, 0.064, reservoirs.TankI
 C6 = tubes.Conduit("C6",0.1,0.003,0.064,Aluminium)
 B1 = tubes.Bend("B1",0.1,0.003,0.064,Aluminium,90,0.05)
 C7 = tubes.Conduit("C7",0.1,0.003,0.064,Aluminium)
-SV2 = valves.Valve("SV2",True,"Ball","Solenoid",0.064,0)
+SV2 = valves.Valve("SV2",True,"Ball","Solenoid",0.064,-1)
 C8 = tubes.Conduit("C8",0.1,0.003,0.064,Aluminium)
-MV4 = valves.Valve("MV4",True,"Ball","Manual",0.064,0)
+MV4 = valves.Valve("MV4",True,"Ball","Manual",0.064,-1)
 C9 = tubes.Conduit("C9",0.1,0.003,0.064,Aluminium)
 I1 = injectors.Injector("I1",0.3433,0.4067,Steel)
 

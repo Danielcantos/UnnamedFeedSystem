@@ -1,6 +1,6 @@
 # AEther 23-24 
 # Creation: 15/02/2024
-# Last edit: 01/05/2024
+# Last edit: 20/07/2024
 # It models conducts be they straight or curved and the pressure losses incurred
 
 
@@ -18,7 +18,6 @@ import sys
 # Custom libraries
 sys.path.insert(0, './Substances')
 import fluids
-import gases
 import materials
 
 # CLASS AND SUBCLASS DECLARATION
@@ -48,12 +47,12 @@ class Tee(Conduit):
         direction2 = -1
         direction3 = -1
 
-def frictionFactor (fluid: fluids.Fluid, tube: Conduit, massFlow: float):
+def frictionFactor (fluid: fluids.Liquid, tube: Conduit, massFlow: float):
     # Numerical and simplified implementation of the Darcy-Weisbach graph
     
     area = np.pi*(tube.diameter)**2/4 # Tube section
     u = massFlow/(area*fluid.density) # Speed inside of the conduit. Continuity equation
-    nu = fluid.staticViscosity/fluid.density # Kinematic viscosity
+    nu = fluid.dynamicViscosity/fluid.density # Kinematic viscosity
     
     Re = u*tube.diameter/nu
   
@@ -71,7 +70,7 @@ def frictionFactor (fluid: fluids.Fluid, tube: Conduit, massFlow: float):
     return fD
         
         
-def dPDarcyWeisbach(fluid: fluids.Fluid, tube: Conduit, massFlow: float):
+def dPDarcyWeisbach(fluid: fluids.Liquid, tube: Conduit, massFlow: float):
     # Extracted from Idelchik as a first approximation
     # - Will only work for liquids
     # - Boundary layer inside tube is negliged. NOTE: this might be too much
@@ -87,11 +86,11 @@ def dPDarcyWeisbach(fluid: fluids.Fluid, tube: Conduit, massFlow: float):
     
     return dP
 
-def dPBend(fluid:fluids.Fluid, bend:Bend, massFlow:float):
+def dPBend(fluid:fluids.Liquid, bend:Bend, massFlow:float):
     
     area = np.pi/4*(bend.diameter)**2 # Tube section
     u = massFlow/(area*fluid.density) # Speed inside of the conduit. Continuity equation
-    nu = fluid.staticViscosity/fluid.density # Kinematic viscosity
+    nu = fluid.dynamicViscosity/fluid.density # Kinematic viscosity
     
     Re = u*bend.diameter/nu
     
@@ -121,4 +120,4 @@ def dPBend(fluid:fluids.Fluid, bend:Bend, massFlow:float):
     
     return dP
 
-#def dPTee(fluid:fluids.Fluid,tee:Tee,massFlow:float):
+#def dPTee(fluid:fluids.Liquid,tee:Tee,massFlow:float):
