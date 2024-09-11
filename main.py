@@ -5,7 +5,7 @@
 # - Louis Urbin
 # - Thomas Roberge
 
-# Last edit: 08/09/2024 
+# Last edit: 11/09/2024 
 
 # Definition of the system
 # - Components
@@ -67,10 +67,7 @@ def dPGetter(component, node: Node):
                 S = np.pi/4*component.diameter**2
                 v  = node.mdot/(S*node.fluid.density)
                 if component.coefficient > 0: # There is a defined coefficient
-                    # https://www.pipeflow.com/public/PipeFlowExpertSoftwareHelp/html/CvandKvFlowCoefficients1.html
-                    Q = 3600/node.density*node.mdot # Assumed kg/s, transformed into m3/h
-                    dP = node.density/1000*(Q/component.coefficient)**2 # In bar by default
-                    dP = dP*1E-5 # In Pa
+                        dP = valves.dPKvLiquid(node.fluid,component,node.mdot)
                 else:
                     match component.type.lower():
                         case "ball":
@@ -85,11 +82,7 @@ def dPGetter(component, node: Node):
                             dP = valves.dPZapataLiquid(node.fluid,component,node.mdot)
             else: # It's a gas
                 if component.coefficient > 0: # There is a defined coefficient
-                    # https://www.samsongroup.com/document/t00050en.pdf
-                    Q = 3600/node.density*node.mdot # Assumed kg/s, transformed into m3/h
-                    rhoG = 101325/(node.fluid.gasConstant*273) # Density at atmospheric pressure and 0 ºC
-                    dP = (Q/(514*node.coefficient))**2*(rhoG*node.T)/node.P
-                    
+                    dP = valves.dPKvGas(node.fluid,component,node.mdot,node.T,node.P)
                 else:
                     dP = valves.dPZapataGas(node.fluid,component,node.mdot,node.T,node.P)
                 

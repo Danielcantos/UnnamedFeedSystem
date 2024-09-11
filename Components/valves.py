@@ -1,6 +1,6 @@
 # AEther 23-24
 # Creation: 15/02/2024
-# Last edit: 08/09/2024
+# Last edit: 11/09/2024
 # It models valves no matter type, elements that can be closed or opened and 
 # through which a small amount of pressure is lost
 
@@ -89,20 +89,21 @@ def dPCheckValve(fluid:fluids.Liquid,valve:Valve,velocity:float):
 # Pressure drop in valves (from product data)
 
 def dPKvLiquid(fluid:fluids.Liquid,valve:Valve,massFlow:float):
-    # Mass flow is assumed given in kg/s and therefore needs to be changed into L/min
-    Q = massFlow/fluid.density*60*1000 # In L/min
-    dP = fluid.density/1000*(Q/valve.coefficient)**2 # In bar
-    
+    # https://www.pipeflow.com/public/PipeFlowExpertSoftwareHelp/html/CvandKvFlowCoefficients1.html
+    Q = 3600/fluid.density*massFlow # Assumed kg/s, transformed into m3/h
+    dP = fluid.density/1000*(Q/valve.coefficient)**2 # In bar by default
+ 
     return dP*1e5
 
 def dPKvGas(fluid:fluids.Gas,valve:Valve,massFlow:float,temperature:float,pressure:float):
-    rho = pressure/(fluid.gasConstant*temperature)
-    Q = massFlow/rho*60*1000 # In L/min
-    dP = rho/1000*(Q/valve.coefficient)**2 # In bar
+    # https://www.samsongroup.com/document/t00050en.pdf
+    Q = 3600/fluid.density*massFlow# Assumed kg/s, transformed into m3/h
+    rhoG = 101325/(fluid.gasConstant*273) # Density at atmospheric pressure and 0 ºC
+    dP = (Q/(514*valve.coefficient))**2*(rhoG*temperature)/pressure
     
     return dP*1e5
         
-# Pressure drop in valves (from Zapata functions)
+# Pressure drop in valves (from Zapata functions) - DEPRECTED BY dPKvLiquid & dPKvGas
 
 def dPZapataLiquid(fluid: fluids.Liquid, valve: Valve, massFlow: float):
     # Equation presented by Zapata in his S3 project report
