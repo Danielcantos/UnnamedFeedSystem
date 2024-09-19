@@ -5,7 +5,7 @@
 # - Louis Urbin
 # - Thomas Roberge
 
-# Last edit: 11/09/2024 
+# Last edit: 12/09/2024 
 
 # Definition of the system
 # - Components
@@ -111,7 +111,6 @@ def dPGetter(component, node: Node):
     
     return dP      
         
-
 # ---------------------------------------
 # PROGRAM
 # ---------------------------------------
@@ -125,6 +124,7 @@ Steel = materials.Material("Steel",7800,550e6,210e9, 0.25e-6)
 Water = fluids.Liquid("Water",1000,8.9e-4)
 NitrogenLiquid = fluids.Liquid("NitrogenLiquid",806.1,17.81e-6) # Air Liquide (kg/m3), 
 Nitrogen = fluids.Gas("Nitrogen",17.5e-6,296.8)
+Air = fluids.Gas("Air",1.81e-5,287)
 HydrogenPeroxide = fluids.Liquid("H2O2",1369.6,1.24e-3) # Overleaf regression (kg/m3), 
 
 
@@ -137,7 +137,7 @@ print("--------------------------------------------")
 # -------------------------------------------------------
 
 # Objective mass flow
-mdot = 0.2 # in kg/s
+mdot = 0.378 # in kg/s
 inputPressure = 1e5 # in Pa, defined at the exit of the injector
 
 # -------------------------------------------------------
@@ -148,48 +148,41 @@ inputPressure = 1e5 # in Pa, defined at the exit of the injector
 HydraulicChain = []
 
 # List of components, in order
-R1 = sources.Cylinder("R1",120e5,5e-3)
-MV1 = valves.Valve("MV1",True,"Ball","Manual",0.064,-1)
-C1 = tubes.Conduit("C1",0.1,0.003,0.064,Aluminium) # 10 cm tube, 3 mm thick, 1/4" diam NOTE: placeholder
+R1 = sources.Cylinder("R1",15e5,5e-3)
+C1 = tubes.Conduit("C1",91e-3,3e-3,16e-3,Aluminium) 
 PR1 = pressureReducers.PressureReducer("PR1",[pressureReducers.PressureCurve(400e5,np.array([0,1]), [120e5, 120e5])])
 PR1.addPressureCurve(pressureReducers.PressureCurve(1e5,np.array([0,1]), [1e5, 1e5]))
-C2 = tubes.Conduit("C2",0.1,0.003,0.064,Aluminium)
-CV1 = valves.CheckValve("CV1",True,"Ball","Manual",0.064)
-C3 = tubes.Conduit("C3",0.1,0.003,0.064,Aluminium)
-SV1 = valves.Valve("SV1",True,"Ball","Solenoid",0.064,-1)
-C4 = tubes.Conduit("C4",0.1,0.003,0.064,Aluminium)
-BD1 = reliefs.BurstDisk("BD1",False,100e5)
-C5 = tubes.Conduit("C5",0.1,0.003,0.064,Aluminium)
-R2 = reservoirs.Tank("R2",1e5,5e-3, 160e-3, 3e-3, 0.064, 0.064, reservoirs.TankInterface(Nitrogen,Water,0.0))
-C6 = tubes.Conduit("C6",0.1,0.003,0.064,Aluminium)
-B1 = tubes.Bend("B1",0.1,0.003,0.064,Aluminium,90,0.05)
-C7 = tubes.Conduit("C7",0.1,0.003,0.064,Aluminium)
-SV2 = valves.Valve("SV2",True,"Ball","Solenoid",0.064,-1)
-C8 = tubes.Conduit("C8",0.1,0.003,0.064,Aluminium)
-MV4 = valves.Valve("MV4",True,"Ball","Manual",0.064,-1)
-C9 = tubes.Conduit("C9",0.1,0.003,0.064,Aluminium)
-I1 = injectors.Injector("I1",0.3433,0.4067,Steel)
+C2 = tubes.Conduit("C2",62e-3,3e-3,5e-3,Aluminium)
+SV1 = valves.Valve("SV1",True,"Solenoid","Electrical",64e-3,0.15)
+C3 = tubes.Bend("C3",0.752,3e-3,10e-3,Aluminium,90,0.479)
+R2 = reservoirs.Tank("R2",1e5,5e-3, 160e-3, 3e-3, 0.064, 0.064, reservoirs.TankInterface(Air,Water,0.0))
+C4 = tubes.Conduit("C4",79e-3,3e-3,6e-3,Aluminium)
+SV2 = valves.Valve("SV2",True,"Solenoid","Electrical",64e-3,0.50)
+MV1 = valves.Valve("MV1",True,"Ball","Manual",4e-3,-1)
+C5 = tubes.Conduit("C5",11e-3,3e-3,7e-3,Aluminium)
+C6 = tubes.Bend("C6",40e-3,3e-3,4e-3,Aluminium,90,25e-3)
+C7 = tubes.Conduit("C7",0.15,5e-3,16e-3,Aluminium)
+I1 = injectors.Injector("I1",0.2269,0.4459,Steel)
+     
+# Coldflow campaign summer 2024
+test = 11
 
-# Definition of the chain
 HydraulicChain.append(R1)
-HydraulicChain.append(MV1)
 HydraulicChain.append(C1)
 HydraulicChain.append(PR1)
 HydraulicChain.append(C2)
-HydraulicChain.append(CV1)
-HydraulicChain.append(C3)
 HydraulicChain.append(SV1)
-HydraulicChain.append(C4)
-HydraulicChain.append(BD1)
-HydraulicChain.append(C5)
+HydraulicChain.append(C3)
 HydraulicChain.append(R2)
-HydraulicChain.append(C6)
-HydraulicChain.append(B1)
-HydraulicChain.append(C7)
-HydraulicChain.append(SV2)
-HydraulicChain.append(C8)
-HydraulicChain.append(MV4)
-HydraulicChain.append(C9)
+HydraulicChain.append(C4)
+if test == 10:
+    HydraulicChain.append(SV2)
+    HydraulicChain.append(C5)
+else:
+    HydraulicChain.append(MV1)
+    HydraulicChain.append(C6)
+    HydraulicChain.append(C7)
+    
 HydraulicChain.append(I1)
 
 # -------------------------------------------------------
@@ -217,11 +210,13 @@ for i, component in enumerate(reversed(HydraulicChain)):
              
             # Change of substance >> Change of mass flow
             NextNode.mdot = reservoirs.densityInterface(component,NodeChain[i].mdot,NodeChain[i].T,component.pressure)
-                        
+            NextNode.fluid = component.interface.upstreamSubstance
+            
             dPi = reservoirs.dPIn(component,NextNode.mdot,NextNode.T)
             print("Inlet " + component.name + " dP = " + str(dPi) + " Pa")
             
             NextNode.P += dPo + dPi
+            
             NodeChain.append(NextNode)
             
         case pressureReducers.PressureReducer:
@@ -229,6 +224,7 @@ for i, component in enumerate(reversed(HydraulicChain)):
             NextNode.P = Pin
             print(component.name + " input pressure = " + str(Pin) + " Pa")
             NodeChain.append(NextNode)
+            
         case _:
             dP = dPGetter(HydraulicChain[-1-i],NodeChain[i])
             print(component.name + " dP = " + str(dP) + " Pa")

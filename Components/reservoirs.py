@@ -101,7 +101,6 @@ def xiInput(gas: fluids.Gas, tank: Tank, massFlowIn: float, temperature: float):
         1/(np.log10(Re))**3*(-13.217 - 53.955*(1-FF)**2 + 33.8053*(1-FF)**4)
     else:
         xi = 30/Re
-        
         #xi = 4.3*np.power(Re,-0.16) # NOTE: old Louis Urbin adjustment (2024)
         
     return xi

@@ -1,6 +1,6 @@
 # AEther 23-24 
 # Creation: 15/02/2024
-# Last edit: 20/07/2024
+# Last edit: 14/09/2024
 # It models conducts be they straight or curved and the pressure losses incurred
 
 
@@ -64,8 +64,8 @@ def frictionFactor (fluid: fluids.Liquid, tube: Conduit, massFlow: float):
         fD = 0.3164/Re**0.25     
     else:
         # You should see this
-        print("ERROR: high Re regime achieved in " + tube.name + " (Re = " + str(Re) + ")")
-        fD = 10
+        print("ERROR: high Re regime achieved in tube " + tube.name + " (Re = " + str(Re) + ")")
+        fD = 0.3164/Re**0.25   
         
     return fD
         
@@ -109,7 +109,7 @@ def dPBend(fluid:fluids.Liquid, bend:Bend, massFlow:float):
         elif Re*np.sqrt(bend.diameter/(2*bend.radiusCurve)) < 5000:
             lamb = 5/(Re**0.45)*(bend.diameter/(2*2*bend.radiusCurve))**(0.275)
         else:
-            print("ERROR: high Re regime achieved in " + bend.name + " (Re = " + str(Re) + ")")
+            print("ERROR: high Re regime achieved in bend " + bend.name + " (Re = " + str(Re) + ")")
             lamb = 0.05 # Worst case scenario from diagram 6.2
             
         xi = 0.0175*lamb*bend.angle*bend.radiusCurve/bend.diameter

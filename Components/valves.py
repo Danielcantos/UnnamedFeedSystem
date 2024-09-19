@@ -1,6 +1,6 @@
 # AEther 23-24
 # Creation: 15/02/2024
-# Last edit: 11/09/2024
+# Last edit: 12/09/2024
 # It models valves no matter type, elements that can be closed or opened and 
 # through which a small amount of pressure is lost
 
@@ -19,7 +19,7 @@ class Valve:
                 self.name = name # Identifier on the PI&D
                 self.type = type
                 self.state = state # Closed (0) or Opened (1)
-                self.actuation = actuation # Manual, solenoid or pneumatic
+                self.actuation = actuation # Manual, electrical or pneumatic
                 self.diameter = diameter # Valve diameter
                 self.coefficient = coefficient # The valve's Cv, -1 if there's no coefficient
                 
@@ -97,7 +97,8 @@ def dPKvLiquid(fluid:fluids.Liquid,valve:Valve,massFlow:float):
 
 def dPKvGas(fluid:fluids.Gas,valve:Valve,massFlow:float,temperature:float,pressure:float):
     # https://www.samsongroup.com/document/t00050en.pdf
-    Q = 3600/fluid.density*massFlow# Assumed kg/s, transformed into m3/h
+    rho = pressure/(fluid.gasConstant*temperature)
+    Q = 3600/rho*massFlow# Assumed kg/s, transformed into m3/h
     rhoG = 101325/(fluid.gasConstant*273) # Density at atmospheric pressure and 0 ºC
     dP = (Q/(514*valve.coefficient))**2*(rhoG*temperature)/pressure
     
