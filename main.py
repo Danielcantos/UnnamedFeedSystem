@@ -1,11 +1,15 @@
 # SCUBE - AEther feed system calculator program
-# Developed by the Feed System Team 2023-24:
+# Feed System Team 2023-24:
 # - Daniel Cantos Gálvez (danielcantosgalvez@gmail.com)
 # - Hemanth Alapati
 # - Louis Urbin
 # - Thomas Roberge
 
-# Last edit: 12/09/2024 
+# Feed System Team 2024-25:
+# - Daniel Cantos Gálvez (danielcantosgalvez@gmail.com)
+# - Nikolai Chisholm 
+
+# Last edit: 19/11/2024 
 
 # Definition of the system
 # - Components
@@ -224,7 +228,13 @@ for i, component in enumerate(reversed(HydraulicChain)):
             NextNode.P = Pin
             print(component.name + " input pressure = " + str(Pin) + " Pa")
             NodeChain.append(NextNode)
-            
+        
+        case valves.Valve | valves.CheckValve:
+            dP =  component.dP(NodeChain[i])
+            print(component.name + " dP = " + str(dP) + " Pa")
+            NextNode.P += dP
+            NodeChain.append(NextNode)
+
         case _:
             dP = dPGetter(HydraulicChain[-1-i],NodeChain[i])
             print(component.name + " dP = " + str(dP) + " Pa")
