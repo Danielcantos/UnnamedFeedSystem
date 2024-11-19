@@ -48,72 +48,9 @@ class Node:
         self.T = T
         
 # ---------------------------------------
-# MAIN HELPER FUNCTIONS
+# HELPER FUNCTIONS
 # ---------------------------------------
 
-# def dPGetter(component, node: Node):
-#     dP = 0
-#     match type(component):
-#         case tubes.Conduit:
-#             if type(node.fluid) is fluids.Liquid: # It's a liquid
-#                 dP = tubes.dPDarcyWeisbach(node.fluid,component,node)
-#             else: # It's a gas
-#                 dP = 0   
-                     
-#         case tubes.Elbow:
-#             if type(node.fluid) is fluids.Liquid: # It's a liquid
-#                 dP = tubes.dPElbow(node.fluid,component,node)
-#             else: # It's a gas
-#                 dP = 0
-    
-#         case valves.Valve:
-#             if type(node.fluid) is fluids.Liquid: # It's a liquid
-#                 S = np.pi/4*component.diameter**2
-#                 v  = node.mdot/(S*node.fluid.density)
-#                 if component.coefficient > 0: # There is a defined coefficient
-#                         dP = valves.dPKvLiquid(node.fluid,component,node.mdot)
-#                 else:
-#                     match component.type.lower():
-#                         case "ball":
-#                             dP = valves.dPBallValve(node.fluid,component,0.0,v)
-#                         case "butterfly":
-#                             dP = valves.dPButterflyValve(node.fluid,component,0.0,v)
-#                         case "gate":
-#                             dP = valves.dPGateValve(node.fluid,component,component.diameter,v)
-#                         case "globe":
-#                             dP = valves.dPGlobeValve(node.fluid,component,v)
-#                         case _:
-#                             dP = valves.dPZapataLiquid(node.fluid,component,node.mdot)
-#             else: # It's a gas
-#                 if component.coefficient > 0: # There is a defined coefficient
-#                     dP = valves.dPKvGas(node.fluid,component,node.mdot,node.T,node.P)
-#                 else:
-#                     dP = valves.dPZapataGas(node.fluid,component,node.mdot,node.T,node.P)
-                
-#         case valves.CheckValve:
-#             if type(node.fluid) is fluids.Liquid: # It's a liquid
-#                 S = np.pi/4*component.diameter**2
-#                 v  = node.mdot/(S*node.fluid.density)
-#                 dP = valves.dPCheckValve(node.fluid,component,v)
-#             else: # It's a gas
-#                 dP = valves.dPZapataGas(node.fluid,component,node.mdot,node.T,node.P)
-        
-#         case reliefs.Relief:
-#             if node.P > component.burstPressure:
-#                 print("Relief has been triggered")
-                
-#             dP = 0
-            
-#         case injectors.Injector:
-#             if type(node.fluid) is fluids.Liquid: # It's a liquid
-#                 dP = injectors.dP(node.fluid,component,node)
-#             else: # It's a gas
-#                 print("Why are you injecting a gas?")
-            
-#         case _: 
-#             print("Error")
-    
-#     return dP      
         
 # ---------------------------------------
 # PROGRAM
@@ -223,12 +160,6 @@ for i, component in enumerate(reversed(HydraulicChain)):
             
             NodeChain.append(NextNode)
             
-        case pressureReducers.PressureReducer:
-            Pin = pressureReducers.interpolatePressure(component,NodeChain[i].P,NodeChain[i].mdot)
-            NextNode.P = Pin
-            print(component.name + " input pressure = " + str(Pin) + " Pa")
-            NodeChain.append(NextNode)
-        
         case _:
             dP =  component.dP(NodeChain[i])
             print(component.name + " dP = " + str(dP) + " Pa")

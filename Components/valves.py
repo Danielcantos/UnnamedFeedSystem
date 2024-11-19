@@ -43,7 +43,7 @@ class Valve:
         def dP(self,node): # Node is not defined here, but in main
             '''
             Returns the correct loss of pressure in Pa based on the type of valve and the fluid.
-            - node: point on the hydraulic chain in which the valve is located and associated data.
+            - node: point on the hydraulic chain in which the valve is located, and its associated data.
             '''
             dP = 0
             if type(node.fluid) is fluids.Gas:
@@ -98,7 +98,7 @@ class CheckValve:
         def dP(self,node): 
             '''
             Returns the correct loss of pressure in Pa based on the fluid.
-            - node: point on the hydraulic chain in which the valve is located
+            - node: point on the hydraulic chain in which the check valve is located, and its associated data
             '''
             if type(node.fluid) is fluids.Gas: # It's a gas
                 dP = 0.0

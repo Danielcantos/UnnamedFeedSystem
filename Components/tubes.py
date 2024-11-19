@@ -41,7 +41,7 @@ class Conduit:
     def dP(self,node):
         '''
         Returns the correct loss of pressure in Pa based on Darcy-Weisbach
-        - node: point on the hydraulic chain in which the valve is located and associated data
+        - node: point on the hydraulic chain in which the conduit is located, and its associated data
         '''
         dP = dPDarcyWeisbach(node.fluid,self,node)
         return dP
@@ -66,7 +66,7 @@ class Elbow(Conduit) :
     def dP(self,node):
         '''
         Returns the correct loss of pressure in Pa based on analytical Reynolds correlations
-        - node: point on the hydraulic chain in which the valve is located and associated data
+        - node: point on the hydraulic chain in which the conduit is located, and its associated data
         '''
         dP = dPElbow(node.fluid,self,node)
         return dP
