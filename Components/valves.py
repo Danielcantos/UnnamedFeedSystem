@@ -17,12 +17,22 @@ import materials
 # CLASS AND SUBCLASS DECLARATION
 class Valve:
         def __init__(self,name:str,state:bool,type:str,actuation:str,diameter:float,coefficient:float): 
-                self.name = name # Identifier on the PI&D
-                self.type = type
-                self.state = state # Closed (0) or Opened (1)
-                self.actuation = actuation # Manual, electrical or pneumatic
-                self.diameter = diameter # Valve diameter
-                self.coefficient = coefficient # The valve's Cv, -1 if there's no coefficient
+            '''
+            Object used to describe two-way valves of any type (so not including check valves).
+            - name is the code identifying the piece
+            - state is a boolean defining closed (False) and opened (True) states. NOTE: unused as of 19/11/2024
+            - type is a string defining the internal mechanism of the valve (ball, solenoid...)
+            - actuation is a string defining the activation mechanism of the valve (manual, electrical, pneumatic...) NOTE: unused as of 19/11/2024
+            - material is a Material object
+            - diameter is the internal diameter of the valve in m (thread standard can be used)
+            - coefficient is the pressure loss coefficient of the valve
+            '''
+            self.name = name # Identifier on the PI&D
+            self.type = type
+            self.state = state # Closed (0) or Opened (1)
+            self.actuation = actuation # Manual, electrical or pneumatic
+            self.diameter = diameter # Valve diameter
+            self.coefficient = coefficient # The valve's Cv, -1 if there's no coefficient
                 
         def open(self):
             self.state = True
@@ -33,16 +43,16 @@ class Valve:
         def dP(self,node): # Node is not defined here, but in main
             '''
             Returns the correct loss of pressure in Pa based on the type of valve and the fluid.
-            - node: point on the hydraulic chain in which the valve is located
+            - node: point on the hydraulic chain in which the valve is located and associated data.
             '''
             dP = 0
             if type(node.fluid) is fluids.Gas:
-                 dP = dPKvGas(node.fluid,self,node.mdot,node.T,node.P) # Will work with or without defines loss
+                 dP = dPKvGas(node.fluid,self,node) # Will work with or without defines loss
             elif type(node.fluid) is fluids.Liquid: # It's a liquid
                 S = np.pi/4*self.diameter**2
                 v  = node.mdot/(S*node.fluid.density) # Continuity
                 if self.coefficient > 0: # There is a defined coefficient
-                        dP = dPKvLiquid(node.fluid,self,node.mdot)
+                        dP = dPKvLiquid(node.fluid,self,node)
                 else:
                     match self.type.lower():
                         case "ball":
@@ -57,18 +67,27 @@ class Valve:
                         case _:
                             # Assume a valve coefficient of 1, which is a lot
                             self.coefficient = 1
-                            dP = dPKvLiquid(node.fluid,self,node.mdot)
+                            dP = dPKvLiquid(node.fluid,self,node)
             else:
                 print("Is not gas or liquid. Are you trying to push a solid through the valve?")
             
             return dP
             
 class CheckValve:
-        def __init__(self,name:str,state: bool,type: str,actuation:str,diameter:float): 
-                self.name = name # Identifier on the PI&D
-                self.state = state # Closed (0) or Opened (1)
-                self.actuation = actuation # Manual, solenoid or pneumatic
-                self.diameter = diameter #diameter of the valve
+        def __init__(self,name:str,state:bool,type:str,actuation:str,diameter:float): 
+            '''
+            Object used to describe one-way valves.
+            - name is the code identifying the piece
+            - state is a boolean defining closed (False) and opened (True) states. NOTE: unused as of 19/11/2024
+            - type is a string defining the internal mechanism of the valve (ball, solenoid...)
+            - actuation is a string defining the activation mechanism of the valve (manual, electrical, pneumatic...) NOTE: unused as of 19/11/2024
+            - material is a Material object
+            - diameter is the internal diameter of the valve in m
+            '''
+            self.name = name # Identifier on the PI&D
+            self.state = state # Closed (0) or Opened (1)
+            self.actuation = actuation # Manual, solenoid or pneumatic
+            self.diameter = diameter #diameter of the valve
                 
         def open(self):
             self.state = True
@@ -167,31 +186,33 @@ def dPCheckValve(fluid:fluids.Liquid,valve:Valve,velocity:float):
 
 
 # Pressure drop in valves (from product data)
-def dPKvLiquid(fluid:fluids.Liquid,valve:Valve,massFlow:float):
+def dPKvLiquid(fluid:fluids.Liquid,valve:Valve,node):
     '''
     Calculates the loss of pressure in Pa for a valve with a known loss coefficient under a liquid flow.
     It will fail if no valve coefficient is defined.
     - fluid is the Liquid object
     - valve is the Valve object
-    - massFlow is the mas flow in kg/s
+    - node is the Node object
     '''
     # https://www.pipeflow.com/public/PipeFlowExpertSoftwareHelp/html/CvandKvFlowCoefficients1.html
+    massFlow = node.mdot
     Q = 3600/fluid.density*massFlow # Assumed kg/s, transformed into m3/h
     dP = fluid.density/1000*(Q/valve.coefficient)**2 # In bar by default
  
     return dP*1e5
 
-def dPKvGas(fluid:fluids.Gas,valve:Valve,massFlow:float,temperature:float,pressure:float):
+def dPKvGas(fluid:fluids.Gas,valve:Valve,node):
     '''
     Calculates the loss of pressure in Pa for a valve with a known loss coefficient under a gas flow. 
     If the coefficient is unknown, it assumes Kv = 1. Ideal gas is assumed for any case.
     - fluid is the Gas object
     - valve is the Valve object
-    - massFlow is the mas flow in kg/s
-    - temperature is the gas temperature in the conduit in K
-    - pressure is the pressure of the gas in Pa
+    - node is the Node object
     '''
     # https://www.samsongroup.com/document/t00050en.pdf.
+    massFlow = node.mdot
+    pressure = node.P
+    temperature = node.T
     rho = pressure/(fluid.gasConstant*temperature)
     Q = 3600/rho*massFlow# Assumed kg/s, transformed into m3/h
     rhoG = 101325/(fluid.gasConstant*273) # Density at atmospheric pressure and 0 ºC
