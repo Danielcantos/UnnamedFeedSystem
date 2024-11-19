@@ -51,7 +51,52 @@ class Node:
 # HELPER FUNCTIONS
 # ---------------------------------------
 
+def nodeChainExecution(HydraulicChain,dt,inputPressure,mdot,fluid,T,verbose):
+    NodeChain = [] # From the injector upstream
+
+    NodeChain.append(Node(inputPressure,mdot,Water,Tamb))
+
+    for i, component in enumerate(reversed(HydraulicChain)):
+        if i == 0: 
+            print("Injection pressure = " + str(NodeChain[i].P) + " Pa")
+        elif verbose: 
+            print("Current pressure = " + str(NodeChain[i].P) + " Pa")
+        else: pass
+    
+        NextNode = NodeChain[i] # NOTE: will need to do i+1 if we put a node inside chamber
+    
+        match type(component): # To handle all component not strictly linked to a single dP
+            case reservoirs.Tank:
+                dPo = reservoirs.dPOut(component,NodeChain[i].mdot)
+                if verbose: print("Outlet " + component.name + " dP = " + str(dPo) + " Pa")
+            
+                # Managing the tank component
+                component.pressure = NextNode.P + dPo # Intermediate tank pressure inside of the tank class
+                reservoirs.updateInterface(component,NextNode.mdot,dt) # Propellant is drained from the tank
+             
+                # Change of substance >> Change of mass flow
+                NextNode.mdot = reservoirs.densityInterface(component,NodeChain[i].mdot,NodeChain[i].T,component.pressure)
+                NextNode.fluid = component.interface.upstreamSubstance
+            
+                dPi = reservoirs.dPIn(component,NextNode.mdot,NextNode.T)
+                if verbose: print("Inlet " + component.name + " dP = " + str(dPi) + " Pa")
+            
+                NextNode.P += dPo + dPi
+                NodeChain.append(NextNode)
         
+            case sources.Cylinder:
+                print("Pressurizer pressure: " + str(NextNode.P) + " Pa")
+                print("Pressurizer mass flow: " + str(NextNode.mdot) + " kg/s")
+                print("----------------------------------------------")
+                return NextNode.P, NextNode.mdot
+                break
+    
+            case _:
+                dP =  component.dP(NodeChain[i])
+                if verbose: print(component.name + " dP = " + str(dP) + " Pa")
+                NextNode.P += dP
+                NodeChain.append(NextNode)          
+    
 # ---------------------------------------
 # PROGRAM
 # ---------------------------------------
@@ -78,8 +123,10 @@ print("--------------------------------------------")
 # -------------------------------------------------------
 
 # Objective mass flow
+mode = 2
 mdot = 0.378 # in kg/s
 inputPressure = 1e5 # in Pa, defined at the exit of the injector
+pressurizerPressure = 100e5
 
 # -------------------------------------------------------
 # HYDRAULIC CHAIN SETUP (INPUT)
@@ -130,43 +177,20 @@ HydraulicChain.append(I1)
 # NODE CHAIN EXECUTION
 # -------------------------------------------------------
 
-NodeChain = [] # From the injector upstream
-
-NodeChain.append(Node(inputPressure,mdot,Water,Tamb))
-
+verbose = True
 dt = 0.1 # NOTE: placeholder, only used for interface update
-
-for i, component in enumerate(reversed(HydraulicChain)):
-    print("Current pressure = " + str(NodeChain[i].P) + " Pa")
-    NextNode = NodeChain[i] # NOTE: will need to do i+1 if we put a node inside chamber
-    
-    match type(component): # To handle all component not strictly linked to a single dP
-        case reservoirs.Tank:
-            dPo = reservoirs.dPOut(component,NodeChain[i].mdot)
-            print("Outlet " + component.name + " dP = " + str(dPo) + " Pa")
-            
-            # Managing the tank component
-            component.pressure = NextNode.P + dPo # Intermediate tank pressure inside of the tank class
-            reservoirs.updateInterface(component,NextNode.mdot,dt) # Propellant is drained from the tank
-             
-            # Change of substance >> Change of mass flow
-            NextNode.mdot = reservoirs.densityInterface(component,NodeChain[i].mdot,NodeChain[i].T,component.pressure)
-            NextNode.fluid = component.interface.upstreamSubstance
-            
-            dPi = reservoirs.dPIn(component,NextNode.mdot,NextNode.T)
-            print("Inlet " + component.name + " dP = " + str(dPi) + " Pa")
-            
-            NextNode.P += dPo + dPi
-            
-            NodeChain.append(NextNode)
-            
-        case _:
-            dP =  component.dP(NodeChain[i])
-            print(component.name + " dP = " + str(dP) + " Pa")
-            NextNode.P += dP
-            NodeChain.append(NextNode)          
-        
-       
-    if i == len(HydraulicChain)-2: # Not counting the cylinder and the additional node of the reservoir
-        print("Pressurizer mass flow: " + str(NextNode.mdot))
-        break
+if mode == 1: # We know the downstream (injection and mass flow)
+    Ppres, mdotPres =  nodeChainExecution(HydraulicChain,dt,inputPressure,mdot,Water,Tamb,verbose)
+else: # We know injection and pressurizer properties 
+    out = False
+    mdot = 0.1
+    eps = 5
+    while not out: 
+        Ppres, mdotPres =  nodeChainExecution(HydraulicChain,dt,inputPressure,mdot,Water,Tamb,False)
+        if np.abs((Ppres - pressurizerPressure)/pressurizerPressure)*100 > eps and Ppres < pressurizerPressure:
+            mdot = mdot + 0.01
+        elif np.abs((Ppres - pressurizerPressure)/pressurizerPressure)*100 > eps and Ppres > pressurizerPressure: 
+            mdot = mdot - 0.01
+        else:
+            print("Convergence achieved for mdot = " + str(mdot) + " kg/s")
+            out = True
