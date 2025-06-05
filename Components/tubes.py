@@ -1,6 +1,6 @@
 # AEther 23-24 
 # Creation: 15/02/2024
-# Last edit: 19/11/2024
+# Last edit: 05/06/2025
 # It models conducts be they straight or curved and the pressure losses incurred
 
 
@@ -103,7 +103,7 @@ def frictionFactor (fluid: fluids.Liquid, tube: Conduit, massFlow: float):
         fD = 0.3164/Re**0.25     
     else:
         # You should see this
-        print("ERROR: high Re regime achieved in tube " + tube.name + " (Re = " + str(Re) + ")")
+        print("WARNING: high Re regime achieved in tube " + tube.name + " (Re = " + str(Re) + ")")
         fD = 0.3164/Re**0.25   
         
     return fD
@@ -151,7 +151,7 @@ def dPElbow(fluid:fluids.Liquid, elbow:Elbow, node):
     
     if type(fluid) is fluids.Liquid:
         rho = fluid.density
-    else:
+    elif type(fluid) is fluids.Gas:
         T = node.T
         P = node.P
         r = fluid.gasConstant
@@ -176,7 +176,7 @@ def dPElbow(fluid:fluids.Liquid, elbow:Elbow, node):
         elif Re*np.sqrt(elbow.diameter/(2*elbow.radiusCurve)) < 5000:
             lamb = 5/(Re**0.45)*(elbow.diameter/(2*2*elbow.radiusCurve))**(0.275)
         else:
-            print("ERROR: high Re regime achieved in bend " + elbow.name + " (Re = " + str(Re) + ")")
+            print("WARNING: high Re regime achieved in bend " + elbow.name + " (Re = " + str(Re) + ")")
             lamb = 0.05 # Worst case scenario from diagram 6.2
             
         xi = 0.0175*lamb*elbow.angle*elbow.radiusCurve/elbow.diameter

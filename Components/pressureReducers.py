@@ -15,7 +15,7 @@ import materials
 # CLASS AND SUBCLASS DECLARATION
 
 class PressureCurve:
-    def __init__(self,Pin: float, mdot: np.array, Pout: np.array):
+    def __init__(self,Pin: float, mdot: np.ndarray, Pout: np.ndarray):
         '''
         Class codifying a set of curves mass flow - output pressure for a given input pressure.
         These are used to describe the behaviour of a pressure reducer.

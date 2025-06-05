@@ -8,8 +8,9 @@
 # Feed System Team 2024-25:
 # - Daniel Cantos Gálvez (danielcantosgalvez@gmail.com)
 # - Nikolai Chisholm 
+# - Joan Miquel Bengochea López
 
-# Last edit: 19/11/2024 
+# Last edit: 05/06/2025 
 
 # Definition of the system
 # - Components
@@ -123,8 +124,8 @@ print("--------------------------------------------")
 # -------------------------------------------------------
 
 # Objective mass flow
-mode = 2
-mdot = 0.378 # in kg/s
+mode = 1
+mdot = 1 # in kg/s
 inputPressure = 1e5 # in Pa, defined at the exit of the injector
 pressurizerPressure = 100e5
 
@@ -138,8 +139,8 @@ HydraulicChain = []
 # List of components, in order
 R1 = sources.Cylinder("R1",15e5,5e-3)
 C1 = tubes.Conduit("C1",91e-3,3e-3,16e-3,Aluminium) 
-PR1 = pressureReducers.PressureReducer("PR1",[pressureReducers.PressureCurve(400e5,np.array([0,1]), [120e5, 120e5])])
-PR1.addPressureCurve(pressureReducers.PressureCurve(1e5,np.array([0,1]), [1e5, 1e5]))
+PR1 = pressureReducers.PressureReducer("PR1",[pressureReducers.PressureCurve(400e5,np.array([0,1]), np.array([120e5, 120e5]))])
+PR1.addPressureCurve(pressureReducers.PressureCurve(1e5,np.array([0,1]), np.array([1e5, 1e5])))
 C2 = tubes.Conduit("C2",62e-3,3e-3,5e-3,Aluminium)
 SV1 = valves.Valve("SV1",True,"Solenoid","Electrical",64e-3,0.15)
 C3 = tubes.Elbow("C3",0.752,3e-3,10e-3,Aluminium,90,0.479)

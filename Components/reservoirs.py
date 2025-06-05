@@ -1,6 +1,6 @@
 # AEther 23-24
 # Creation: 16/02/2024
-# Last edit: 20/07/2024
+# Last edit: 05/06/2025
 # Two phase containers where the propellant is kept until forced out via pressurization
 
 # Native libraries
@@ -148,17 +148,18 @@ def dPOut(tank: Tank, massFlowOut: float):
     
     return dPOut
 
-def dPTot(tank: Tank, massFlowOut: float, temperature: float, pressure: float):
-    area = np.pi*(tank.diameter)**2/4 # Tube section
-    rho = tank.interface.downstreamSubstance.density # Assumed incompressible
-    w0 = massFlowOut/(area*rho) # Speed inside of the conduit. Continuity equation
+# def dPTot(tank: Tank, massFlowOut: float, temperature: float, pressure: float):
+#     area = np.pi*(tank.diameter)**2/4 # Tube section
+#     rho = tank.interface.downstreamSubstance.density # Assumed incompressible
+#     w0 = massFlowOut/(area*rho) # Speed inside of the conduit. Continuity equation
     
-    dPOutput = dPOut(tank,massFlowOut,w0)
-    Pin = pressure + dPOutput
+#     dPOutput = dPOut(tank,massFlowOut)
+#     Pin = pressure + dPOutput
+#     print("This line IS running")
+
+#     massFlowIn = densityInterface(tank, massFlowOut, temperature, pressure)
+#     dPInput = dPIn(tank,massFlowIn,temperature)
     
-    massFlowIn = densityInterface(tank, massFlowOut, temperature, pressure)
-    dPInput = dPIn(tank,massFlowIn,w0,temperature)
+#     dP = dPInput + dPOutput
     
-    dP = dPInput + dPOutput
-    
-    return dP
+#     return dP

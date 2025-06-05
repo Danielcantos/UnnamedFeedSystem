@@ -1,6 +1,6 @@
 # AEther 23-24
 # Creation: 15/02/2024
-# Last edit: 19/11/2024
+# Last edit: 05/06/2025
 # It models valves no matter type, elements that can be closed or opened and 
 # through which a small amount of pressure is lost
 
@@ -172,7 +172,7 @@ def dPGlobeValve(fluid:fluids.Liquid,valve:Valve,velocity:float):
     return dP
 
 
-def dPCheckValve(fluid:fluids.Liquid,valve:Valve,velocity:float):
+def dPCheckValve(fluid:fluids.Liquid,valve:CheckValve,velocity:float):
     '''
     Calculates the loss of pressure in Pa for a check valve under liquid flow.
     - fluid is the Fluid object
